@@ -376,34 +376,6 @@ export default function Login() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-16 px-4 bg-[#1e293b]">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
-            Why Choose BetGeniuz?
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="text-[#f59e0b] text-4xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold text-white mb-2">Expert Predictions</h3>
-              <p className="text-gray-400">Professional analysis with proven accuracy rates</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-[#f59e0b] text-4xl mb-4">⚡</div>
-              <h3 className="text-xl font-semibold text-white mb-2">Real-time Updates</h3>
-              <p className="text-gray-400">Live match updates and instant notifications</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-[#f59e0b] text-4xl mb-4">👑</div>
-              <h3 className="text-xl font-semibold text-white mb-2">VIP Features</h3>
-              <p className="text-gray-400">Exclusive content and premium betting insights</p>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   )
 }
