@@ -1,0 +1,1321 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function AdminDashboard() {
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [games, setGames] = useState([
+    {
+      id: 1,
+      homeTeam: 'Manchester United',
+      awayTeam: 'Liverpool',
+      prediction: 'Home Win',
+      odds: '2.15',
+      status: 'active',
+      date: '2024-01-15',
+      league: 'Premier League',
+      description: 'Strong home form expected',
+      available: true,
+      category: 'free',
+      result: 'pending'
+    },
+    {
+      id: 2,
+      homeTeam: 'Arsenal',
+      awayTeam: 'Chelsea',
+      prediction: 'Draw',
+      odds: '3.20',
+      status: 'pending',
+      date: '2024-01-16',
+      league: 'Premier League',
+      description: 'Evenly matched teams',
+      available: true,
+      category: 'vip1',
+      result: 'pending'
+    }
+  ])
+
+  const [vipPackages, setVipPackages] = useState([
+    {
+      id: 1,
+      name: 'VIP 1',
+      price: '$50',
+      description: 'Basic VIP package with daily predictions',
+      available: true,
+      features: ['Daily Predictions', 'Basic Support', 'Email Updates']
+    },
+    {
+      id: 2,
+      name: 'VIP 2',
+      price: '$100',
+      description: 'Premium VIP package with advanced features',
+      available: true,
+      features: ['Daily Predictions', 'Priority Support', 'WhatsApp Updates', 'Exclusive Tips']
+    },
+    {
+      id: 3,
+      name: 'VIP 3',
+      price: '$200',
+      description: 'Ultimate VIP package with all features',
+      available: true,
+      features: ['Daily Predictions', '24/7 Support', 'WhatsApp Updates', 'Exclusive Tips', 'Personal Consultation']
+    }
+  ])
+
+  const [newGame, setNewGame] = useState({
+    homeTeam: '',
+    awayTeam: '',
+    prediction: '',
+    odds: '',
+    date: '',
+    league: '',
+    description: '',
+    category: 'free', // Default to free predictions
+    result: 'pending' // Default to pending
+  })
+
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: 'New VIP member joined', type: 'info', read: false },
+    { id: 2, message: 'Daily predictions updated', type: 'success', read: false },
+    { id: 3, message: 'Payment received from user123', type: 'success', read: true }
+  ])
+
+  const [users, setUsers] = useState([
+    { id: 1, username: 'user123', email: 'user123@email.com', phone: '0551112222', status: 'active', vip: true },
+    { id: 2, username: 'bettingpro', email: 'pro@email.com', phone: '0243334444', status: 'active', vip: false },
+    { id: 3, username: 'newuser', email: 'new@email.com', phone: '0205556666', status: 'active', vip: false }
+  ])
+
+  const [filteredGames, setFilteredGames] = useState(games)
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [loadInput, setLoadInput] = useState('')
+  const [loadedGames, setLoadedGames] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [gamesByCategory, setGamesByCategory] = useState({
+    free: [] as any[],
+    vip1: [] as any[],
+    vip2: [] as any[],
+    vip3: [] as any[]
+  })
+  const [uploadedSlips, setUploadedSlips] = useState<any[]>([])
+  const [selectedSlip, setSelectedSlip] = useState<any>(null)
+  const [showCodePanel, setShowCodePanel] = useState(false)
+  const [sportyCodeInput, setSportyCodeInput] = useState('')
+  const [msportCodeInput, setMsportCodeInput] = useState('')
+  const [footballCodeInput, setFootballCodeInput] = useState('')
+  const [smsMessage, setSmsMessage] = useState('')
+  const [smsRecipients, setSmsRecipients] = useState<'all' | 'custom'>('all')
+  const [customNumbers, setCustomNumbers] = useState('')
+  const [isSendingSms, setIsSendingSms] = useState(false)
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const isAdminLoggedIn = localStorage.getItem('adminLoggedIn')
+    if (!isAdminLoggedIn) {
+      router.push('/')
+    }
+  }, [router])
+
+  // Update filtered games when games change
+  useEffect(() => {
+    setFilteredGames(games)
+  }, [games])
+
+  const handleAddGame = () => {
+    if (newGame.homeTeam && newGame.awayTeam && newGame.prediction) {
+      const game = {
+        id: Date.now(),
+        ...newGame,
+        status: 'pending',
+        available: true
+      }
+      const updatedGames = [...games, game]
+      setGames(updatedGames)
+      setFilteredGames(updatedGames)
+      setNewGame({
+        homeTeam: '',
+        awayTeam: '',
+        prediction: '',
+        odds: '',
+        date: '',
+        league: '',
+        description: '',
+        category: 'free',
+        result: 'pending'
+      })
+    }
+  }
+
+  const toggleGameStatus = (id: number) => {
+    const updatedGames = games.map(game => 
+      game.id === id 
+        ? { ...game, status: game.status === 'active' ? 'pending' : 'active' }
+        : game
+    )
+    setGames(updatedGames)
+    setFilteredGames(updatedGames)
+  }
+
+  const deleteGame = (id: number) => {
+    const updatedGames = games.filter(game => game.id !== id)
+    setGames(updatedGames)
+    setFilteredGames(updatedGames)
+  }
+
+  const updateGameResult = (id: number, result: 'won' | 'lost' | 'pending') => {
+    const updatedGames = games.map(game => 
+      game.id === id ? { ...game, result } : game
+    )
+    setGames(updatedGames)
+    setFilteredGames(updatedGames)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminLoggedIn')
+    router.push('/')
+  }
+
+  const markNotificationRead = (id: number) => {
+    setNotifications(notifications.map(notif => 
+      notif.id === id ? { ...notif, read: true } : notif
+    ))
+  }
+
+  const toggleUserStatus = (id: number) => {
+    setUsers(users.map(user => 
+      user.id === id 
+        ? { ...user, status: user.status === 'active' ? 'suspended' : 'active' }
+        : user
+    ))
+  }
+
+  const toggleUserVIP = (id: number) => {
+    setUsers(users.map(user => 
+      user.id === id ? { ...user, vip: !user.vip } : user
+    ))
+  }
+
+  // Mock API function to simulate loading games from SportyBet
+  const mockLoadGames = async (bookingCode: string, category: string) => {
+    setIsLoading(true)
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // Mock data based on category
+    const mockGames = {
+      free: [
+        {
+          id: Date.now() + 1,
+          homeTeam: 'Barcelona',
+          awayTeam: 'Real Madrid',
+          prediction: 'Over 2.5 Goals',
+          odds: '1.85',
+          status: 'active',
+          date: '2024-01-20',
+          league: 'La Liga',
+          description: 'El Clasico - High scoring match expected',
+          available: true,
+          category: 'free',
+          result: 'pending',
+          bookingCode: bookingCode,
+          platform: 'SportyBet'
+        },
+        {
+          id: Date.now() + 2,
+          homeTeam: 'Manchester City',
+          awayTeam: 'Arsenal',
+          prediction: 'Home Win',
+          odds: '2.10',
+          status: 'active',
+          date: '2024-01-21',
+          league: 'Premier League',
+          description: 'City strong at home',
+          available: true,
+          category: 'free',
+          result: 'pending',
+          bookingCode: bookingCode,
+          platform: 'SportyBet'
+        }
+      ],
+      vip1: [
+        {
+          id: Date.now() + 3,
+          homeTeam: 'Bayern Munich',
+          awayTeam: 'Borussia Dortmund',
+          prediction: 'Both Teams to Score',
+          odds: '1.75',
+          status: 'active',
+          date: '2024-01-22',
+          league: 'Bundesliga',
+          description: 'Der Klassiker - Goals expected',
+          available: true,
+          category: 'vip1',
+          result: 'pending',
+          bookingCode: bookingCode,
+          platform: 'SportyBet'
+        },
+        {
+          id: Date.now() + 4,
+          homeTeam: 'PSG',
+          awayTeam: 'Marseille',
+          prediction: 'PSG Win & Over 2.5',
+          odds: '2.45',
+          status: 'active',
+          date: '2024-01-23',
+          league: 'Ligue 1',
+          description: 'Le Classique - PSG dominance',
+          available: true,
+          category: 'vip1',
+          result: 'pending',
+          bookingCode: bookingCode,
+          platform: 'SportyBet'
+        }
+      ],
+      vip2: [
+        {
+          id: Date.now() + 5,
+          homeTeam: 'Juventus',
+          awayTeam: 'Inter Milan',
+          prediction: 'Under 2.5 Goals',
+          odds: '1.90',
+          status: 'active',
+          date: '2024-01-24',
+          league: 'Serie A',
+          description: 'Derby d\'Italia - Tight match',
+          available: true,
+          category: 'vip2',
+          result: 'pending',
+          bookingCode: bookingCode,
+          platform: 'SportyBet'
+        }
+      ],
+      vip3: [
+        {
+          id: Date.now() + 6,
+          homeTeam: 'Liverpool',
+          awayTeam: 'Chelsea',
+          prediction: 'Liverpool Win & Clean Sheet',
+          odds: '3.20',
+          status: 'active',
+          date: '2024-01-25',
+          league: 'Premier League',
+          description: 'Premium VIP prediction',
+          available: true,
+          category: 'vip3',
+          result: 'pending',
+          bookingCode: bookingCode,
+          platform: 'SportyBet'
+        }
+      ]
+    }
+    
+    const games = mockGames[category as keyof typeof mockGames] || []
+    
+    // Store games by category
+    setGamesByCategory(prev => ({
+      ...prev,
+      [category]: [...(prev[category as keyof typeof prev] || []), ...games]
+    }))
+    
+    // Set current loaded games for display
+    setLoadedGames(games)
+    setIsLoading(false)
+    
+    // Show success message
+    alert(`Successfully loaded ${games.length} games from SportyBet with booking code: ${bookingCode}`)
+  }
+
+  const handleLoadGames = () => {
+    if (!loadInput.trim()) {
+      alert('Please enter a booking code')
+      return
+    }
+    
+    if (activeFilter === 'all') {
+      alert('Please select a specific category (Free, VIP 1, VIP 2, or VIP 3) to load games')
+      return
+    }
+    
+    mockLoadGames(loadInput, activeFilter)
+  }
+
+  const clearLoadInput = () => {
+    setLoadInput('')
+  }
+
+  return (
+    <div className="min-h-screen bg-[#191970] text-white">
+      {/* Header */}
+      <header className="bg-[#191970] border-b border-indigo-400 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-white">BetGeniuz Admin</h1>
+            <span className="text-indigo-200 text-sm">Control Panel</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-indigo-200">Admin User</span>
+            <button 
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Navigation Tabs */}
+        <div className="flex space-x-1 bg-[#2e2e8f] p-1 rounded-lg mb-8">
+          {['dashboard', 'games', 'gamescontrol', 'users', 'notifications', 'sms', 'settings'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-3 rounded-md transition-colors capitalize ${
+                activeTab === tab
+                  ? 'bg-[#f59e0b] text-white'
+                  : 'text-indigo-200 hover:text-white'
+              }`}
+            >
+              {tab === 'gamescontrol' ? 'Games Control' : tab === 'sms' ? 'SMS' : tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Dashboard Overview Tab */}
+        {activeTab === 'dashboard' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Users</p>
+                  <p className="text-2xl font-semibold text-gray-900">{users.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-green-100 text-green-600">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Active Games</p>
+                  <p className="text-2xl font-semibold text-gray-900">{games.filter(g => g.status === 'active').length}</p>
+                </div>
+              </div>
+            </div>
+
+                         <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+               <div className="flex items-center">
+                 <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.83 4.83a4 4 0 015.66 0H18a2 2 0 012 2v6.34a4 4 0 01-1.17 2.83L12 22l-6.83-6.83A4 4 0 014 15.34V9a2 2 0 012-2h7.51a4 4 0 01-1.68-4.17z" />
+                   </svg>
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-sm font-medium text-gray-600">VIP Users</p>
+                   <p className="text-2xl font-semibold text-gray-900">{users.filter(u => u.vip).length}</p>
+                 </div>
+               </div>
+             </div>
+
+             <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+               <div className="flex items-center">
+                 <div className="p-3 rounded-full bg-purple-100 text-purple-600">
+                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                   </svg>
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-sm font-medium text-gray-600">VIP Packages Available</p>
+                   <p className="text-2xl font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/{vipPackages.length}</p>
+                 </div>
+               </div>
+             </div>
+
+                         <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+               <div className="flex items-center">
+                 <div className="p-3 rounded-full bg-red-100 text-red-600">
+                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                   </svg>
+                 </div>
+                 <div className="ml-4">
+                   <p className="text-sm font-medium text-gray-600">Unread Notifications</p>
+                   <p className="text-2xl font-semibold text-gray-900">{notifications.filter(n => !n.read).length}</p>
+                 </div>
+               </div>
+             </div>
+          </div>
+        )}
+
+                 {/* Games Management Tab */}
+         {activeTab === 'games' && (
+           <div className="space-y-6">
+             {/* Category Filter */}
+             <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+               <h2 className="text-xl font-bold mb-4">Filter Games by Category</h2>
+               <div className="flex flex-wrap gap-4">
+                 <button
+                   onClick={() => {
+                     setLoadedGames([])
+                     setActiveFilter('all')
+                     setSelectedSlip(null)
+                   }}
+                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                     activeFilter === 'all' 
+                       ? 'bg-[#f59e0b] text-white' 
+                       : 'bg-gray-600 hover:bg-gray-700 text-white'
+                   }`}
+                 >
+                   Slips ({uploadedSlips.length})
+                 </button>
+                 <button
+                   onClick={() => {
+                     setLoadedGames(gamesByCategory.free)
+                     setActiveFilter('free')
+                     setLoadInput('')
+                   }}
+                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                     activeFilter === 'free' 
+                       ? 'bg-[#f59e0b] text-white' 
+                       : 'bg-gray-600 hover:bg-gray-700 text-white'
+                   }`}
+                 >
+                   Free Predictions
+                 </button>
+                 <button
+                   onClick={() => {
+                     setLoadedGames(gamesByCategory.vip1)
+                     setActiveFilter('vip1')
+                     setLoadInput('')
+                   }}
+                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                     activeFilter === 'vip1' 
+                       ? 'bg-[#f59e0b] text-white' 
+                       : 'bg-gray-600 hover:bg-gray-700 text-white'
+                   }`}
+                 >
+                   VIP 1
+                 </button>
+                 <button
+                   onClick={() => {
+                     setLoadedGames(gamesByCategory.vip2)
+                     setActiveFilter('vip2')
+                     setLoadInput('')
+                   }}
+                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                     activeFilter === 'vip2' 
+                       ? 'bg-[#f59e0b] text-white' 
+                       : 'bg-gray-600 hover:bg-gray-700 text-white'
+                   }`}
+                 >
+                   VIP 2
+                 </button>
+                 <button
+                   onClick={() => {
+                     setLoadedGames(gamesByCategory.vip3)
+                     setActiveFilter('vip3')
+                     setLoadInput('')
+                   }}
+                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                     activeFilter === 'vip3' 
+                       ? 'bg-[#f59e0b] text-white' 
+                       : 'bg-gray-600 hover:bg-gray-700 text-white'
+                   }`}
+                 >
+                   VIP 3
+                 </button>
+               </div>
+             </div>
+             
+            {/* Slips Display - Only show when "Slips" is selected */}
+            {activeFilter === 'all' && (
+              <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-xl font-bold">Uploaded Slips</h2>
+                  <p className="text-sm text-gray-600 mt-1">Click on a slip to view and edit games</p>
+                </div>
+                
+                {uploadedSlips.length === 0 ? (
+                  <div className="px-6 py-8 text-center text-gray-500">
+                    No slips uploaded yet. Load games and click "Upload" to create slips.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {uploadedSlips.map((slip) => (
+                      <div 
+                        key={slip.id} 
+                        className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                          selectedSlip?.id === slip.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                        }`}
+                        onClick={() => setSelectedSlip(selectedSlip?.id === slip.id ? null : slip)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="text-lg font-medium text-gray-900">{slip.name}</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {slip.games.length} games • Total Odds: {slip.totalOdds} • {slip.createdAt}
+                            </p>
+               </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              slip.status === 'active' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {slip.status}
+                            </span>
+                            <svg 
+                              className={`w-5 h-5 text-gray-400 transition-transform ${
+                                selectedSlip?.id === slip.id ? 'rotate-180' : ''
+                              }`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+            </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Selected Slip Games Display */}
+            {selectedSlip && (
+            <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-xl font-bold">{selectedSlip.name}</h2>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedSlip.games.length} games • Total Odds: {selectedSlip.totalOdds}
+                      </p>
+              </div>
+                    <button
+                      onClick={() => setSelectedSlip(null)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Games in selected slip */}
+                <div className="divide-y divide-gray-200">
+                  {selectedSlip.games.map((game: any, index: number) => (
+                    <div key={game.id}>
+                      <div className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                        <div className="flex items-center space-x-4 flex-1">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                          <div className="text-sm font-medium text-gray-900">
+                            {game.homeTeam} vs {game.awayTeam}
+                          </div>
+                              {/* Result Status Indicator */}
+                              {game.result && (
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                  game.result === 'won' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : game.result === 'lost'
+                                    ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                                  {game.result === 'won' ? '✓' : 
+                                   game.result === 'lost' ? '✗' : '?'}
+                          </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {game.league} • {game.date}
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1">
+                              {game.prediction}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Odds and Actions */}
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <div className="text-sm font-medium text-gray-900">
+                              {game.odds}
+                            </div>
+                          </div>
+                          
+                            <button
+                            onClick={() => {
+                              // Toggle edit mode for this specific game
+                              const updatedSlips = uploadedSlips.map((s: any) => 
+                                s.id === selectedSlip.id 
+                                  ? {
+                                      ...s,
+                                      games: s.games.map((g: any) => 
+                                        g.id === game.id ? { ...g, isEditing: !g.isEditing } : g
+                                      )
+                                    }
+                                  : s
+                              )
+                              setUploadedSlips(updatedSlips)
+                              setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                            }}
+                            className="bg-[#191970] hover:bg-[#2e2e8f] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Result Editing Section - Only show when editing */}
+                      {game.isEditing && (
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-700">
+                              Update Result:
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {/* Correct Mark (Won) */}
+                              <button
+                                onClick={() => {
+                                  const updatedSlips = uploadedSlips.map((s: any) => 
+                                    s.id === selectedSlip.id 
+                                      ? {
+                                          ...s,
+                                          games: s.games.map((g: any) => 
+                                            g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
+                                          )
+                                        }
+                                      : s
+                                  )
+                                  setUploadedSlips(updatedSlips)
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                }}
+                                className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                                <span className="text-sm font-medium">Won</span>
+                            </button>
+                            
+                              {/* Wrong Mark (Lost) */}
+                            <button
+                                onClick={() => {
+                                  const updatedSlips = uploadedSlips.map((s: any) => 
+                                    s.id === selectedSlip.id 
+                                      ? {
+                                          ...s,
+                                          games: s.games.map((g: any) => 
+                                            g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
+                                          )
+                                        }
+                                      : s
+                                  )
+                                  setUploadedSlips(updatedSlips)
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                }}
+                                className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                                <span className="text-sm font-medium">Lost</span>
+                            </button>
+                            
+                              {/* Question Mark (Pending) */}
+                            <button
+                                onClick={() => {
+                                  const updatedSlips = uploadedSlips.map((s: any) => 
+                                    s.id === selectedSlip.id 
+                                      ? {
+                                          ...s,
+                                          games: s.games.map((g: any) => 
+                                            g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
+                                          )
+                                        }
+                                      : s
+                                  )
+                                  setUploadedSlips(updatedSlips)
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                }}
+                                className="flex items-center space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                                <span className="text-sm font-medium">Pending</span>
+                              </button>
+                              
+                              {/* Cancel Button */}
+                              <button
+                                onClick={() => {
+                                  const updatedSlips = uploadedSlips.map((s: any) => 
+                                    s.id === selectedSlip.id 
+                                      ? {
+                                          ...s,
+                                          games: s.games.map((g: any) => 
+                                            g.id === game.id ? { ...g, isEditing: false } : g
+                                          )
+                                        }
+                                      : s
+                                  )
+                                  setUploadedSlips(updatedSlips)
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                }}
+                                className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
+                              >
+                                Cancel
+                            </button>
+                          </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Loaded Games Results - SportyBet Betting Slip Format */}
+            {loadedGames.length > 0 && (
+              <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-xl font-bold">Loaded Games from SportyBet</h2>
+                      <p className="text-sm text-gray-600 mt-1">Booking Code: {loadedGames[0]?.bookingCode}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setLoadedGames([])
+                        setLoadInput('')
+                        // Clear games from the current category
+                        if (activeFilter !== 'all') {
+                          setGamesByCategory(prev => ({
+                            ...prev,
+                            [activeFilter]: []
+                          }))
+                        }
+                      }}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Betting Slip Format */}
+                <div className="divide-y divide-gray-200">
+                  {loadedGames.map((game: any, index: number) => (
+                    <div key={game.id}>
+                      <div className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                        <div className="flex items-center space-x-4 flex-1">
+                          {/* Remove Button */}
+                          <button
+                            onClick={() => setLoadedGames(loadedGames.filter((g: any) => g.id !== game.id))}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          
+                          {/* Match Info */}
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <div className="text-sm font-medium text-gray-900">
+                                {game.homeTeam} vs {game.awayTeam}
+                              </div>
+                              {/* Result Status Indicator */}
+                              {game.result && (
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              game.result === 'won' 
+                                ? 'bg-green-100 text-green-800' 
+                                : game.result === 'lost'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                                  {game.result === 'won' ? '✓' : 
+                                   game.result === 'lost' ? '✗' : '?'}
+                            </span>
+                              )}
+                          </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {game.league} • {game.date}
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1">
+                              {game.prediction}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Odds and Actions */}
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <div className="text-sm font-medium text-gray-900">
+                              {game.odds}
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              // Toggle edit mode for this specific game
+                              const updatedLoadedGames = loadedGames.map((g: any) => 
+                                g.id === game.id ? { ...g, isEditing: !g.isEditing } : g
+                              )
+                              setLoadedGames(updatedLoadedGames)
+                            }}
+                            className="bg-[#191970] hover:bg-[#2e2e8f] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Result Editing Section - Only show when editing */}
+                      {game.isEditing && (
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-700">
+                              Update Result:
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {/* Correct Mark (Won) */}
+                          <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
+                                }}
+                                className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span className="text-sm font-medium">Won</span>
+                          </button>
+                              
+                              {/* Wrong Mark (Lost) */}
+                              <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
+                                }}
+                                className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span className="text-sm font-medium">Lost</span>
+                              </button>
+                              
+                              {/* Question Mark (Pending) */}
+                              <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
+                                }}
+                                className="flex items-center space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="text-sm font-medium">Pending</span>
+                              </button>
+                              
+                              {/* Cancel Button */}
+                              <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
+                                }}
+                                className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+                
+                {/* Footer with total info and upload button */}
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="text-sm text-gray-600">
+                      {loadedGames.length} selection{loadedGames.length !== 1 ? 's' : ''} loaded
+            </div>
+                    <div className="flex flex-col items-end">
+                      <div className="text-sm font-medium text-gray-900">
+                        Total Odds: {loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2)}
+                      </div>
+                      {/* Booking Codes small button + panel */}
+                      <div className="relative mt-2">
+                        <button
+                          onClick={() => setShowCodePanel(!showCodePanel)}
+                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                        >
+                          {showCodePanel ? 'Hide' : 'Add Booking'}
+                        </button>
+                        {showCodePanel && (
+                          <div className="fixed bottom-24 right-8 w-80 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 z-50 text-left">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-gray-800">Attach Booking</h4>
+                              <button onClick={() => setShowCodePanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                            </div>
+                            <label className="block text-xs text-gray-600 mb-1">SportyBet Code</label>
+                            <input
+                              type="text"
+                              value={sportyCodeInput}
+                              onChange={(e) => setSportyCodeInput(e.target.value)}
+                              placeholder="e.g. abcd"
+                              className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                            />
+                            <label className="block text-xs text-gray-600 mb-1">MSport Code</label>
+                            <input
+                              type="text"
+                              value={msportCodeInput}
+                              onChange={(e) => setMsportCodeInput(e.target.value)}
+                              placeholder="e.g. efgh"
+                              className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                            />
+                            <label className="block text-xs text-gray-600 mb-1">Football.com Code</label>
+                            <input
+                              type="text"
+                              value={footballCodeInput}
+                              onChange={(e) => setFootballCodeInput(e.target.value)}
+                              placeholder="e.g. ijkl"
+                              className="w-full px-3 py-2 border rounded text-sm"
+                            />
+                            <p className="text-[11px] text-gray-500 mt-2">Codes will be attached to this {activeFilter === 'free' ? 'Free' : activeFilter.toUpperCase()} slip on upload.</p>
+          </div>
+                 )}
+                      </div>
+                      <button
+                                              onClick={() => {
+                        // Create a new slip
+                        const newSlip = {
+                          id: Date.now(),
+                          name: `Slip(${uploadedSlips.length + 1}) - ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}`,
+                          category: activeFilter,
+                          games: [...loadedGames],
+                          totalOdds: loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2),
+                          createdAt: new Date().toLocaleString(),
+                          status: 'active',
+                          bookingCodes: {
+                            sporty: sportyCodeInput || loadedGames[0]?.bookingCode || '',
+                            msport: msportCodeInput || '',
+                            football: footballCodeInput || ''
+                          }
+                        }
+                        
+                        // Add slip to uploaded slips
+                        setUploadedSlips(prev => [...prev, newSlip])
+                        
+                        // Add games to the main games list for users to see
+                        const updatedGames = [...games, ...loadedGames]
+                        setGames(updatedGames)
+                        setFilteredGames(updatedGames)
+                        
+                        // Clear loaded games and show success message
+                        setLoadedGames([])
+                        setLoadInput('')
+                        setSportyCodeInput('')
+                        setMsportCodeInput('')
+                        setShowCodePanel(false)
+                        
+                        // Clear from category storage
+                        if (activeFilter !== 'all') {
+                          setGamesByCategory(prev => ({
+                            ...prev,
+                            [activeFilter]: []
+                          }))
+                        }
+                        
+                        alert(`Successfully uploaded ${loadedGames.length} games to ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} section!`)
+                      }}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors mt-2"
+                      >
+                        Upload
+                 </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Load Games Section - Only show when category is selected and no games are loaded */}
+            {activeFilter !== 'all' && loadedGames.length === 0 && (
+              <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 className="text-xl font-bold mb-4">Load Games - {activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}</h2>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder={`Enter SportyBet booking code for ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}...`}
+                      value={loadInput}
+                      onChange={(e) => setLoadInput(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-green-500 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
+                    />
+                    {loadInput && (
+                 <button
+                        onClick={clearLoadInput}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                 >
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                   </svg>
+                 </button>
+                    )}
+               </div>
+                  <button 
+                    onClick={handleLoadGames}
+                    disabled={isLoading}
+                    className={`px-6 py-3 rounded-lg font-bold transition-colors ${
+                      isLoading 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-[#191970] hover:bg-[#2e2e8f]'
+                    } text-white`}
+                  >
+                    {isLoading ? 'Loading...' : 'Load'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+                 )}
+
+         {/* Games Control Tab */}
+         {activeTab === 'gamescontrol' && (
+           <div className="space-y-6">
+             {/* VIP Package Availability Control */}
+             <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+               <h2 className="text-xl font-bold mb-4">VIP Package Availability Control</h2>
+               <p className="text-gray-600 mb-6">Control which VIP packages are available for purchase and which are sold out</p>
+               
+               {/* Bulk control buttons removed as requested */}
+
+               {/* VIP Packages List with Availability Control */}
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {vipPackages.map((pkg) => (
+                   <div key={pkg.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">{pkg.name}</h3>
+                     
+                     <button
+                       onClick={() => setVipPackages(vipPackages.map(p => 
+                         p.id === pkg.id ? { ...p, available: !p.available } : p
+                       ))}
+                       className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                         pkg.available
+                           ? 'bg-red-600 hover:bg-red-700 text-white'
+                           : 'bg-green-600 hover:bg-green-700 text-white'
+                       }`}
+                     >
+                       {pkg.available ? 'Sold Out' : 'Available'}
+                     </button>
+                   </div>
+                 ))}
+               </div>
+             </div>
+
+             {/* VIP Availability Summary removed */}
+           </div>
+         )}
+
+         {/* Users Management Tab */}
+        {activeTab === 'users' && (
+          <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold">User Management</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.map((user) => (
+                    <tr key={user.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.phone}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          user.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+          <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold">Notification Management</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {notifications.map((notification) => (
+                <div 
+                  key={notification.id} 
+                  className={`p-4 rounded-lg border ${
+                    notification.read 
+                      ? 'bg-gray-50 border-gray-200' 
+                      : 'bg-blue-50 border-blue-200'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className={`font-medium ${
+                        notification.read ? 'text-gray-600' : 'text-blue-800'
+                      }`}>
+                        {notification.message}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Type: {notification.type} | 
+                        Status: {notification.read ? 'Read' : 'Unread'}
+                      </p>
+                    </div>
+                    {!notification.read && (
+                      <button
+                        onClick={() => markNotificationRead(notification.id)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Mark Read
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'sms' && (
+          <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Send SMS to Users</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <textarea
+                  value={smsMessage}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                  rows={6}
+                  maxLength={480}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#191970] focus:border-transparent"
+                  placeholder="Type the SMS to send to users..."
+                />
+                <div className="text-xs text-gray-500 mt-1">{smsMessage.length}/480 characters</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Recipients</label>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      checked={smsRecipients === 'all'}
+                      onChange={() => setSmsRecipients('all')}
+                    />
+                    <span className="text-sm text-gray-700">All Users</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      checked={smsRecipients === 'custom'}
+                      onChange={() => setSmsRecipients('custom')}
+                    />
+                    <span className="text-sm text-gray-700">Custom Numbers</span>
+                  </label>
+                  {smsRecipients === 'custom' && (
+                    <textarea
+                      value={customNumbers}
+                      onChange={(e) => setCustomNumbers(e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#191970] focus:border-transparent"
+                      placeholder="Enter comma-separated phone numbers, e.g. 0551112222,0243334444"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={async () => {
+                  if (!smsMessage.trim()) { alert('Please enter a message'); return }
+                  setIsSendingSms(true)
+                  await new Promise(r => setTimeout(r, 1200))
+                  const target = smsRecipients === 'all' ? 'all users' : `custom: ${customNumbers}`
+                  alert(`SMS sent to ${target}`)
+                  setIsSendingSms(false)
+                  setSmsMessage('')
+                  setCustomNumbers('')
+                }}
+                disabled={isSendingSms}
+                className={`px-6 py-3 rounded-lg font-bold text-white ${isSendingSms ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#191970] hover:bg-[#2e2e8f]'}`}
+              >
+                {isSendingSms ? 'Sending…' : 'Send SMS'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Admin Settings</h2>
+            <p className="text-gray-600">Settings features coming soon...</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
