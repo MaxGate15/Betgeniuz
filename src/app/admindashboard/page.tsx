@@ -1310,9 +1310,288 @@ export default function AdminDashboard() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Admin Settings</h2>
-            <p className="text-gray-600">Settings features coming soon...</p>
+          <div className="space-y-6">
+            {/* Admin Management Section */}
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold mb-6 text-[#2e2e8f]">Admin Management</h2>
+              
+              {/* Add New Admin Form */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4 text-gray-700">Add New Admin</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="admin@betgeniuz.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="+233 123 456 789"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin Role</label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]">
+                      <option value="super_admin">Super Admin</option>
+                      <option value="admin">Admin</option>
+                      <option value="moderator">Moderator</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" defaultChecked />
+                        <span className="text-sm">Manage Games</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" defaultChecked />
+                        <span className="text-sm">Manage Users</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" />
+                        <span className="text-sm">Send SMS</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" />
+                        <span className="text-sm">Manage Admins</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <button className="bg-[#2e2e8f] hover:bg-[#1e1e7f] text-white px-6 py-2 rounded-md transition-colors">
+                    Add Admin
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Admins List */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-700">Current Admins</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-[#2e2e8f] flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">AU</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">Admin User</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">admin@betgeniuz.com</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Super Admin</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 minutes ago</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-[#2e2e8f] hover:text-[#1e1e7f] mr-3">Edit</button>
+                          <button className="text-red-600 hover:text-red-900">Deactivate</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">JS</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">John Smith</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">john@betgeniuz.com</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 hour ago</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-[#2e2e8f] hover:text-[#1e1e7f] mr-3">Edit</button>
+                          <button className="text-red-600 hover:text-red-900">Deactivate</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">MJ</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">Mary Johnson</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">mary@betgeniuz.com</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Moderator</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 days ago</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-[#2e2e8f] hover:text-[#1e1e7f] mr-3">Edit</button>
+                          <button className="text-green-600 hover:text-green-900">Activate</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* System Settings Section */}
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold mb-6 text-[#2e2e8f]">System Settings</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-700">General Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
+                      <input
+                        type="text"
+                        defaultValue="BetGeniuz"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Site URL</label>
+                      <input
+                        type="url"
+                        defaultValue="https://betgeniuz.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+                      <input
+                        type="email"
+                        defaultValue="support@betgeniuz.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-700">Security Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+                      <input
+                        type="number"
+                        defaultValue="30"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
+                      <input
+                        type="number"
+                        defaultValue="5"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="twoFactor" className="mr-2" defaultChecked />
+                      <label htmlFor="twoFactor" className="text-sm font-medium text-gray-700">Enable Two-Factor Authentication</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button className="bg-[#2e2e8f] hover:bg-[#1e1e7f] text-white px-6 py-2 rounded-md transition-colors">
+                  Save Settings
+                </button>
+              </div>
+            </div>
+
+            {/* Notification Settings Section */}
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold mb-6 text-[#2e2e8f]">Notification Settings</h2>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Email Notifications</h4>
+                    <p className="text-xs text-gray-500">Receive email alerts for important events</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">SMS Notifications</h4>
+                    <p className="text-xs text-gray-500">Receive SMS alerts for critical events</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Push Notifications</h4>
+                    <p className="text-xs text-gray-500">Receive browser push notifications</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Admin Alerts</h4>
+                    <p className="text-xs text-gray-500">Get notified when new admins are added</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
