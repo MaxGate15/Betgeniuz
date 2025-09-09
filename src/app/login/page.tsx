@@ -181,14 +181,6 @@ export default function Login() {
                   Sign In
                 </button>
 
-                {/* Demo Credentials */}
-                <div className="text-center p-4 bg-[#0f172a] rounded-lg border border-gray-600">
-                  <p className="text-sm text-gray-400 mb-2">Demo Credentials:</p>
-                  <div className="space-y-1 text-xs">
-                    <p className="text-[#f59e0b]"><strong>Admin:</strong> admin / admin123</p>
-                    <p className="text-gray-300"><strong>Regular User:</strong> any other credentials</p>
-                  </div>
-                </div>
 
                 <div className="text-center">
                   <span className="text-gray-400">Don't have an account? </span>
