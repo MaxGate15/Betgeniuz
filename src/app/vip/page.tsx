@@ -35,10 +35,29 @@ export default function VIP() {
   const [selectedLocation, setSelectedLocation] = useState<'ghana' | 'not-ghana' | null>(null)
   const [purchasedPackages, setPurchasedPackages] = useState<string[]>([])
   const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null)
+  const [adminVipPackages, setAdminVipPackages] = useState(VIP_PACKAGES)
+  const [adminBookingCodes, setAdminBookingCodes] = useState({
+    vip1: { sporty: 'SP12345', msport: 'MS12345', football: 'FB12345' },
+    vip2: { sporty: 'SP22345', msport: 'MS22345', football: 'FB22345' },
+    vip3: { sporty: 'SP32345', msport: 'MS32345', football: 'FB32345' }
+  })
+  
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
       if (Array.isArray(saved)) setPurchasedPackages(saved)
+      
+      // Load admin-configured VIP packages
+      const adminPackages = localStorage.getItem('vipPackages')
+      if (adminPackages) {
+        setAdminVipPackages(JSON.parse(adminPackages))
+      }
+      
+      // Load admin-configured booking codes
+      const adminCodes = localStorage.getItem('vipBookingCodes')
+      if (adminCodes) {
+        setAdminBookingCodes(JSON.parse(adminCodes))
+      }
     } catch {}
   }, [])
 
@@ -52,9 +71,10 @@ export default function VIP() {
       setSoldOutVipType(vipType)
       setShowSoldOutPopup(true)
     } else {
-      // Set up location modal first
-      setSelectedVipPackage(VIP_PACKAGES[vipType].name)
-      setSelectedVipAmount(VIP_PACKAGES[vipType].amount)
+      // Set up location modal first using admin-configured prices
+      const vipPackage = adminVipPackages[vipType] || VIP_PACKAGES[vipType]
+      setSelectedVipPackage(vipPackage.name)
+      setSelectedVipAmount(vipPackage.amount)
       setActiveCardIndex(cardIndex)
       setShowLocationModal(true)
     }
@@ -199,20 +219,20 @@ export default function VIP() {
                       <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Sporty:</span>
-                          <button onClick={() => navigator.clipboard.writeText(VIP_PACKAGES.vip1.bookingCodes.sporty)} className="text-[#191970] underline">
-                            {VIP_PACKAGES.vip1.bookingCodes.sporty}
+                          <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip1.sporty)} className="text-[#191970] underline">
+                            {adminBookingCodes.vip1.sporty}
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">MSport:</span>
-                          <button onClick={() => navigator.clipboard.writeText(VIP_PACKAGES.vip1.bookingCodes.msport)} className="text-[#191970] underline">
-                            {VIP_PACKAGES.vip1.bookingCodes.msport}
+                          <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip1.msport)} className="text-[#191970] underline">
+                            {adminBookingCodes.vip1.msport}
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Football.com:</span>
-                          <button onClick={() => navigator.clipboard.writeText(VIP_PACKAGES.vip1.bookingCodes.football)} className="text-[#191970] underline">
-                            {VIP_PACKAGES.vip1.bookingCodes.football}
+                          <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip1.football)} className="text-[#191970] underline">
+                            {adminBookingCodes.vip1.football}
                           </button>
                         </div>
                       </div>
@@ -222,7 +242,7 @@ export default function VIP() {
                       onClick={() => handleBuyNowClick('vip1', 0)}
                       className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                     >
-                      Buy Now 100gh
+                      Buy Now {adminVipPackages.vip1?.price || 'GHS 100'}
                     </button>
                   )}
                 </div>
@@ -343,7 +363,44 @@ export default function VIP() {
                 </div>
               </div>
               
-              {/* No Buy Now button - Results already updated */}
+              {/* Buy Now button for VIP 2 */}
+              {!purchasedPackages.includes('VIP 2') && (
+                <button 
+                  onClick={() => handleBuyNowClick('vip2', 1)}
+                  className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                >
+                  Buy Now {adminVipPackages.vip2?.price || 'GHS 200'}
+                </button>
+              )}
+              
+              {/* Purchased status for VIP 2 */}
+              {purchasedPackages.includes('VIP 2') && (
+                <div className="space-y-2">
+                  <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                    ✓ Purchased — Booking Codes
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Sporty:</span>
+                      <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip2.sporty)} className="text-[#191970] underline">
+                        {adminBookingCodes.vip2.sporty}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">MSport:</span>
+                      <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip2.msport)} className="text-[#191970] underline">
+                        {adminBookingCodes.vip2.msport}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Football.com:</span>
+                      <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip2.football)} className="text-[#191970] underline">
+                        {adminBookingCodes.vip2.football}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Location Modal Overlay for VIP 2 */}
               {showLocationModal && activeCardIndex === 1 && (
@@ -476,7 +533,44 @@ export default function VIP() {
                 </div>
               </div>
               
-              {/* No Buy Now button - Results already updated */}
+              {/* Buy Now button for VIP 3 */}
+              {!purchasedPackages.includes('VIP 3') && (
+                <button 
+                  onClick={() => handleBuyNowClick('vip3', 2)}
+                  className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                >
+                  Buy Now {adminVipPackages.vip3?.price || 'GHS 300'}
+                </button>
+              )}
+              
+              {/* Purchased status for VIP 3 */}
+              {purchasedPackages.includes('VIP 3') && (
+                <div className="space-y-2">
+                  <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                    ✓ Purchased — Booking Codes
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Sporty:</span>
+                      <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip3.sporty)} className="text-[#191970] underline">
+                        {adminBookingCodes.vip3.sporty}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">MSport:</span>
+                      <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip3.msport)} className="text-[#191970] underline">
+                        {adminBookingCodes.vip3.msport}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Football.com:</span>
+                      <button onClick={() => navigator.clipboard.writeText(adminBookingCodes.vip3.football)} className="text-[#191970] underline">
+                        {adminBookingCodes.vip3.football}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Location Modal Overlay for VIP 3 */}
               {showLocationModal && activeCardIndex === 2 && (

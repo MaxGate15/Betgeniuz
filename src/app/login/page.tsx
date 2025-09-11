@@ -14,6 +14,8 @@ export default function Login() {
     firstName: '',
     lastName: ''
   })
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordMatch, setPasswordMatch] = useState(false)
 
   // Open Sign Up tab when accessed via /login?register=true
   useEffect(() => {
@@ -28,11 +30,45 @@ export default function Login() {
     }
   }, [])
 
+  // Clear password error and match state when switching between login and signup
+  useEffect(() => {
+    setPasswordError('')
+    setPasswordMatch(false)
+  }, [isLogin])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
+
+    // Validate password match in real-time
+    if (name === 'password' || name === 'confirmPassword') {
+      if (name === 'password') {
+        // If password is being changed, check against confirmPassword
+        if (formData.confirmPassword && value !== formData.confirmPassword) {
+          setPasswordError('Passwords do not match')
+          setPasswordMatch(false)
+        } else if (formData.confirmPassword && value === formData.confirmPassword) {
+          setPasswordError('')
+          setPasswordMatch(true)
+        } else {
+          setPasswordMatch(false)
+        }
+      } else if (name === 'confirmPassword') {
+        // If confirmPassword is being changed, check against password
+        if (formData.password && value !== formData.password) {
+          setPasswordError('Passwords do not match')
+          setPasswordMatch(false)
+        } else if (formData.password && value === formData.password) {
+          setPasswordError('')
+          setPasswordMatch(true)
+        } else {
+          setPasswordMatch(false)
+        }
+      }
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,7 +98,20 @@ export default function Login() {
         window.location.href = '/'
       }
     } else {
-      // Registration - store user data and redirect to user dashboard
+      // Registration - validate passwords match first
+      if (formData.password !== formData.confirmPassword) {
+        setPasswordError('Passwords do not match')
+        return
+      }
+      
+      if (formData.password.length < 6) {
+        setPasswordError('Password must be at least 6 characters long')
+        return
+      }
+      
+      // Clear any previous password errors
+      setPasswordError('')
+      
       const userData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -288,7 +337,9 @@ export default function Login() {
                     value={formData.password}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#f59e0b] transition-colors"
+                    className={`w-full bg-[#0f172a] border rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none transition-colors ${
+                      passwordError ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-[#f59e0b]'
+                    }`}
                     placeholder="Create a password"
                   />
                 </div>
@@ -297,15 +348,34 @@ export default function Login() {
                   <label className="block text-gray-300 text-sm font-medium mb-2">
                     Confirm Password
                   </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#f59e0b] transition-colors"
-                    placeholder="Confirm your password"
-                  />
+                  <div className="relative">
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                      className={`w-full bg-[#0f172a] border rounded-lg px-4 py-3 pr-10 text-white placeholder-gray-400 focus:outline-none transition-colors ${
+                        passwordError ? 'border-red-500 focus:border-red-500' : 
+                        passwordMatch ? 'border-green-500 focus:border-green-500' : 
+                        'border-gray-700 focus:border-[#f59e0b]'
+                      }`}
+                      placeholder="Confirm your password"
+                    />
+                    {passwordMatch && formData.confirmPassword && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {passwordError && (
+                    <p className="text-red-400 text-sm mt-1">{passwordError}</p>
+                  )}
+                  {passwordMatch && formData.confirmPassword && !passwordError && (
+                    <p className="text-green-400 text-sm mt-1">✓ Passwords match</p>
+                  )}
                 </div>
 
                 {/* Plan selection removed from Sign Up */}

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { reference, packageName } = await request.json();
-
+    
     if (!reference) {
       return NextResponse.json(
         { success: false, message: 'Missing reference' },
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     const status = data?.data?.status;
 
     if (status === 'success') {
-      return NextResponse.json({
-        success: true,
+      return NextResponse.json({ 
+        success: true, 
         message: 'Payment verified successfully',
         reference,
         packageName,

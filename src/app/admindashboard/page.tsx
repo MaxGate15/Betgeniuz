@@ -41,26 +41,32 @@ export default function AdminDashboard() {
     {
       id: 1,
       name: 'VIP 1',
-      price: '$50',
+      price: 'GHS 100',
+      amount: 100,
       description: 'Basic VIP package with daily predictions',
       available: true,
-      features: ['Daily Predictions', 'Basic Support', 'Email Updates']
+      features: ['Daily Predictions', 'Basic Support', 'Email Updates'],
+      bookingCodes: { sporty: 'SP12345', msport: 'MS12345', football: 'FB12345' }
     },
     {
       id: 2,
       name: 'VIP 2',
-      price: '$100',
+      price: 'GHS 200',
+      amount: 200,
       description: 'Premium VIP package with advanced features',
       available: true,
-      features: ['Daily Predictions', 'Priority Support', 'WhatsApp Updates', 'Exclusive Tips']
+      features: ['Daily Predictions', 'Priority Support', 'WhatsApp Updates', 'Exclusive Tips'],
+      bookingCodes: { sporty: 'SP22345', msport: 'MS22345', football: 'FB22345' }
     },
     {
       id: 3,
       name: 'VIP 3',
-      price: '$200',
+      price: 'GHS 300',
+      amount: 300,
       description: 'Ultimate VIP package with all features',
       available: true,
-      features: ['Daily Predictions', '24/7 Support', 'WhatsApp Updates', 'Exclusive Tips', 'Personal Consultation']
+      features: ['Daily Predictions', '24/7 Support', 'WhatsApp Updates', 'Exclusive Tips', 'Personal Consultation'],
+      bookingCodes: { sporty: 'SP32345', msport: 'MS32345', football: 'FB32345' }
     }
   ])
 
@@ -77,15 +83,85 @@ export default function AdminDashboard() {
   })
 
   const [notifications, setNotifications] = useState([
-    { id: 1, message: 'New VIP member joined', type: 'info', read: false },
-    { id: 2, message: 'Daily predictions updated', type: 'success', read: false },
-    { id: 3, message: 'Payment received from user123', type: 'success', read: true }
+    { id: 1, message: 'New user signed up: user123', type: 'info', read: false, timestamp: '2024-12-15 10:30 AM' },
+    { id: 2, message: 'New user signed up: bettingpro', type: 'info', read: false, timestamp: '2024-12-18 2:15 PM' },
+    { id: 3, message: 'VIP package purchased by vipmember', type: 'success', read: false, timestamp: '2024-12-19 4:45 PM' },
+    { id: 4, message: 'New user signed up: recentuser', type: 'info', read: false, timestamp: '2024-12-22 9:20 AM' },
+    { id: 5, message: 'VIP package purchased by activeuser', type: 'success', read: true, timestamp: '2024-12-21 11:30 AM' },
+    { id: 6, message: 'Daily predictions updated', type: 'info', read: true, timestamp: '2024-12-20 8:00 AM' }
   ])
 
   const [users, setUsers] = useState([
-    { id: 1, username: 'user123', email: 'user123@email.com', phone: '0551112222', status: 'active', vip: true },
-    { id: 2, username: 'bettingpro', email: 'pro@email.com', phone: '0243334444', status: 'active', vip: false },
-    { id: 3, username: 'newuser', email: 'new@email.com', phone: '0205556666', status: 'active', vip: false }
+    { 
+      id: 1, 
+      username: 'user123', 
+      email: 'user123@email.com', 
+      phone: '0551112222', 
+      status: 'active', 
+      vip: true,
+      lastActivity: '2024-12-15',
+      signUpDate: '2024-01-15'
+    },
+    { 
+      id: 2, 
+      username: 'bettingpro', 
+      email: 'pro@email.com', 
+      phone: '0243334444', 
+      status: 'active', 
+      vip: false,
+      lastActivity: '2024-12-18',
+      signUpDate: '2024-01-10'
+    },
+    { 
+      id: 3, 
+      username: 'newuser', 
+      email: 'new@email.com', 
+      phone: '0205556666', 
+      status: 'active', 
+      vip: false,
+      lastActivity: '2024-10-15',
+      signUpDate: '2023-12-01'
+    },
+    { 
+      id: 4, 
+      username: 'vipmember', 
+      email: 'vip@email.com', 
+      phone: '0277778888', 
+      status: 'active', 
+      vip: true,
+      lastActivity: '2024-12-19',
+      signUpDate: '2024-01-05'
+    },
+    { 
+      id: 5, 
+      username: 'olduser', 
+      email: 'old@email.com', 
+      phone: '0233334444', 
+      status: 'active', 
+      vip: false,
+      lastActivity: '2024-11-20',
+      signUpDate: '2023-11-15'
+    },
+    { 
+      id: 6, 
+      username: 'activeuser', 
+      email: 'active@email.com', 
+      phone: '0244445555', 
+      status: 'active', 
+      vip: true,
+      lastActivity: '2024-12-21',
+      signUpDate: '2024-01-01'
+    },
+    { 
+      id: 7, 
+      username: 'recentuser', 
+      email: 'recent@email.com', 
+      phone: '0255556666', 
+      status: 'active', 
+      vip: false,
+      lastActivity: '2024-12-22',
+      signUpDate: '2024-01-20'
+    }
   ])
 
   const [filteredGames, setFilteredGames] = useState(games)
@@ -110,6 +186,12 @@ export default function AdminDashboard() {
   const [customNumbers, setCustomNumbers] = useState('')
   const [isSendingSms, setIsSendingSms] = useState(false)
   const [isBookingAttached, setIsBookingAttached] = useState(false)
+  const [showPricePanel, setShowPricePanel] = useState(false)
+  const [vipBookingCodes, setVipBookingCodes] = useState({
+    vip1: { sporty: 'SP12345', msport: 'MS12345', football: 'FB12345' },
+    vip2: { sporty: 'SP22345', msport: 'MS22345', football: 'FB22345' },
+    vip3: { sporty: 'SP32345', msport: 'MS32345', football: 'FB32345' }
+  })
 
   // Check authentication on component mount
   useEffect(() => {
@@ -184,6 +266,44 @@ export default function AdminDashboard() {
     ))
   }
 
+  // Function to add new sign-up notification
+  const addSignUpNotification = (username: string) => {
+    const newNotification = {
+      id: Date.now(),
+      message: `New user signed up: ${username}`,
+      type: 'info' as const,
+      read: false,
+      timestamp: new Date().toLocaleString('en-US', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    }
+    setNotifications(prev => [newNotification, ...prev])
+  }
+
+  // Function to add purchase notification
+  const addPurchaseNotification = (username: string, packageName: string) => {
+    const newNotification = {
+      id: Date.now(),
+      message: `${packageName} package purchased by ${username}`,
+      type: 'success' as const,
+      read: false,
+      timestamp: new Date().toLocaleString('en-US', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    }
+    setNotifications(prev => [newNotification, ...prev])
+  }
+
   const toggleUserStatus = (id: number) => {
     setUsers(users.map(user => 
       user.id === id 
@@ -196,6 +316,23 @@ export default function AdminDashboard() {
     setUsers(users.map(user => 
       user.id === id ? { ...user, vip: !user.vip } : user
     ))
+  }
+
+  // Function to check if user is inactive (more than 30 days since last activity)
+  const isUserInactive = (lastActivity: string) => {
+    const lastActivityDate = new Date(lastActivity)
+    const currentDate = new Date()
+    const daysDifference = Math.floor((currentDate.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
+    console.log(`User last activity: ${lastActivity}, Days difference: ${daysDifference}, Is inactive: ${daysDifference > 30}`)
+    return daysDifference > 30
+  }
+
+  // Function to get days since last activity
+  const getDaysSinceActivity = (lastActivity: string) => {
+    const lastActivityDate = new Date(lastActivity)
+    const currentDate = new Date()
+    const daysDifference = Math.floor((currentDate.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
+    return daysDifference
   }
 
   // Mock API function to simulate loading games from SportyBet
@@ -388,73 +525,46 @@ export default function AdminDashboard() {
 
         {/* Dashboard Overview Tab */}
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg">
               <div className="flex items-center">
-                <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-semibold text-gray-900">{users.length}</p>
+                <div className="ml-3">
+                  <p className="text-xs font-medium text-gray-600">Total Users</p>
+                  <p className="text-lg font-semibold text-gray-900">{users.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-green-100 text-green-600">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Games</p>
-                  <p className="text-2xl font-semibold text-gray-900">{games.filter(g => g.status === 'active').length}</p>
-                </div>
-              </div>
-            </div>
 
-                         <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+             <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg">
                <div className="flex items-center">
-                 <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.83 4.83a4 4 0 015.66 0H18a2 2 0 012 2v6.34a4 4 0 01-1.17 2.83L12 22l-6.83-6.83A4 4 0 014 15.34V9a2 2 0 012-2h7.51a4 4 0 01-1.68-4.17z" />
-                   </svg>
-                 </div>
-                 <div className="ml-4">
-                   <p className="text-sm font-medium text-gray-600">VIP Users</p>
-                   <p className="text-2xl font-semibold text-gray-900">{users.filter(u => u.vip).length}</p>
-                 </div>
-               </div>
-             </div>
-
-             <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-               <div className="flex items-center">
-                 <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <div className="p-2 rounded-full bg-purple-100 text-purple-600">
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                    </svg>
                  </div>
-                 <div className="ml-4">
-                   <p className="text-sm font-medium text-gray-600">VIP Packages Available</p>
-                   <p className="text-2xl font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/{vipPackages.length}</p>
+                 <div className="ml-3">
+                   <p className="text-xs font-medium text-gray-600">VIP Packages Available</p>
+                   <p className="text-lg font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/{vipPackages.length}</p>
                  </div>
                </div>
              </div>
 
-                         <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+                         <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg">
                <div className="flex items-center">
-                 <div className="p-3 rounded-full bg-red-100 text-red-600">
-                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <div className="p-2 rounded-full bg-red-100 text-red-600">
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                    </svg>
                  </div>
-                 <div className="ml-4">
-                   <p className="text-sm font-medium text-gray-600">Unread Notifications</p>
-                   <p className="text-2xl font-semibold text-gray-900">{notifications.filter(n => !n.read).length}</p>
+                 <div className="ml-3">
+                   <p className="text-xs font-medium text-gray-600">Unread Notifications</p>
+                   <p className="text-lg font-semibold text-gray-900">{notifications.filter(n => !n.read).length}</p>
                  </div>
                </div>
              </div>
@@ -567,7 +677,7 @@ export default function AdminDashboard() {
                           <div>
                             <h3 className="text-lg font-medium text-gray-900">{slip.name}</h3>
                             <p className="text-sm text-gray-500 mt-1">
-                              {slip.games.length} games • Total Odds: {slip.totalOdds} • {slip.createdAt}
+                              {slip.games.length} games • Total Odds: {slip.totalOdds} • Price: {slip.price || 'N/A'} • {slip.createdAt}
                             </p>
                </div>
                           <div className="flex items-center space-x-2">
@@ -607,8 +717,16 @@ export default function AdminDashboard() {
                     <div>
                       <h2 className="text-xl font-bold">{selectedSlip.name}</h2>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedSlip.games.length} games • Total Odds: {selectedSlip.totalOdds}
+                        {selectedSlip.games.length} games • Total Odds: {selectedSlip.totalOdds} • Price: {selectedSlip.price || 'N/A'}
                       </p>
+                      {selectedSlip.bookingCodes && (selectedSlip.bookingCodes.sporty || selectedSlip.bookingCodes.msport || selectedSlip.bookingCodes.football) && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          <span className="font-medium">Booking Codes:</span>
+                          {selectedSlip.bookingCodes.sporty && <span className="ml-2">SportyBet: {selectedSlip.bookingCodes.sporty}</span>}
+                          {selectedSlip.bookingCodes.msport && <span className="ml-2">MSport: {selectedSlip.bookingCodes.msport}</span>}
+                          {selectedSlip.bookingCodes.football && <span className="ml-2">Football.com: {selectedSlip.bookingCodes.football}</span>}
+                        </div>
+                      )}
               </div>
                     <button
                       onClick={() => setSelectedSlip(null)}
@@ -1048,54 +1166,114 @@ export default function AdminDashboard() {
                           </div>
                         )}
                       </div>
-                      <button
-                                              onClick={() => {
-                        // Create a new slip
-                        const newSlip = {
-                          id: Date.now(),
-                          name: `Slip(${uploadedSlips.length + 1}) - ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}`,
-                          category: activeFilter,
-                          games: [...loadedGames],
-                          totalOdds: loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2),
-                          createdAt: new Date().toLocaleString(),
-                          status: 'uploaded',
-                          bookingCodes: {
-                            sporty: sportyCodeInput || loadedGames[0]?.bookingCode || '',
-                            msport: msportCodeInput || '',
-                            football: footballCodeInput || ''
-                          }
-                        }
-                        
-                        // Add slip to uploaded slips
-                        setUploadedSlips(prev => [...prev, newSlip])
-                        
-                        // Add games to the main games list for users to see
-                        const updatedGames = [...games, ...loadedGames]
-                        setGames(updatedGames)
-                        setFilteredGames(updatedGames)
-                        
-                        // Clear loaded games and show success message
-                        setLoadedGames([])
-                        setLoadInput('')
-                        setSportyCodeInput('')
-                        setMsportCodeInput('')
-                        setIsBookingAttached(false)
-                        setShowCodePanel(false)
-                        
-                        // Clear from category storage
-                        if (activeFilter !== 'all') {
-                          setGamesByCategory(prev => ({
-                            ...prev,
-                            [activeFilter]: []
-                          }))
-                        }
-                        
-                        alert(`Successfully uploaded ${loadedGames.length} games to ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} section!`)
-                      }}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors mt-2"
-                      >
-                        Upload
-                 </button>
+                      {/* Price Setting Section */}
+                      <div className="relative mt-2">
+                        <button
+                          onClick={() => setShowPricePanel(!showPricePanel)}
+                          className="text-xs bg-[#f59e0b] hover:bg-[#d97706] text-white px-3 py-1 rounded"
+                        >
+                          {showPricePanel ? 'Hide' : 'Set Price'}
+                        </button>
+                        {showPricePanel && (
+                          <div className="fixed bottom-24 right-8 w-80 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 z-50 text-left">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-gray-800">Set VIP Package Price</h4>
+                              <button onClick={() => setShowPricePanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                            </div>
+                            <label className="block text-xs text-gray-600 mb-1">Price (GHS)</label>
+                            <input
+                              type="number"
+                              value={vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0))?.amount || ''}
+                              onChange={(e) => {
+                                const newPrice = e.target.value;
+                                const vipKey = activeFilter === 'vip1' ? 'vip1' : activeFilter === 'vip2' ? 'vip2' : activeFilter === 'vip3' ? 'vip3' : null;
+                                if (vipKey) {
+                                  setVipPackages(vipPackages.map(p => 
+                                    p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : 3) ? { 
+                                      ...p, 
+                                      amount: parseInt(newPrice) || 0, 
+                                      price: `GHS ${newPrice}` 
+                                    } : p
+                                  ));
+                                }
+                              }}
+                              placeholder="Enter price in GHS"
+                              className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                            />
+                            <p className="text-[11px] text-gray-500 mt-2">Price will be set for {activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} package.</p>
+                            <div className="flex justify-end mt-3">
+                              <button 
+                                onClick={() => { 
+                                  localStorage.setItem('vipPackages', JSON.stringify(vipPackages));
+                                  setShowPricePanel(false);
+                                  alert(`Price updated for ${activeFilter.toUpperCase()}!`);
+                                }} 
+                                className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                              >
+                                Save Price
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-2">
+                        <button
+                          onClick={() => {
+                            // Get current price for the VIP package
+                            const currentVipPackage = vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0))
+                            
+                            // Create a new slip
+                            const newSlip = {
+                              id: Date.now(),
+                              name: `Slip(${uploadedSlips.length + 1}) - ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}`,
+                              category: activeFilter,
+                              games: [...loadedGames],
+                              totalOdds: loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2),
+                              createdAt: new Date().toLocaleString(),
+                              status: 'uploaded',
+                              price: activeFilter === 'free' ? 'Free' : currentVipPackage?.price || 'GHS 0',
+                              amount: activeFilter === 'free' ? 0 : currentVipPackage?.amount || 0,
+                              bookingCodes: {
+                                sporty: sportyCodeInput || loadedGames[0]?.bookingCode || '',
+                                msport: msportCodeInput || '',
+                                football: footballCodeInput || ''
+                              }
+                            }
+                            
+                            // Add slip to uploaded slips
+                            setUploadedSlips(prev => [...prev, newSlip])
+                            
+                            // Add games to the main games list for users to see
+                            const updatedGames = [...games, ...loadedGames]
+                            setGames(updatedGames)
+                            setFilteredGames(updatedGames)
+                            
+                            // Clear loaded games and show success message
+                            setLoadedGames([])
+                            setLoadInput('')
+                            setSportyCodeInput('')
+                            setMsportCodeInput('')
+                            setIsBookingAttached(false)
+                            setShowCodePanel(false)
+                            
+                            // Clear from category storage
+                            if (activeFilter !== 'all') {
+                              setGamesByCategory(prev => ({
+                                ...prev,
+                                [activeFilter]: []
+                              }))
+                            }
+                            
+                            const priceInfo = activeFilter === 'free' ? 'Free' : currentVipPackage?.price || 'GHS 0'
+                            const bookingInfo = sportyCodeInput || msportCodeInput || footballCodeInput ? 'with booking codes' : 'without booking codes'
+                            alert(`Successfully uploaded ${loadedGames.length} games to ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} section!\n\nPrice: ${priceInfo}\nBooking Codes: ${bookingInfo}`)
+                          }}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                        >
+                          Upload
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1181,6 +1359,7 @@ export default function AdminDashboard() {
            </div>
          )}
 
+
          {/* Users Management Tab */}
         {activeTab === 'users' && (
           <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
@@ -1199,28 +1378,33 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.phone}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          user.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {user.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {users.map((user) => {
+                    const isInactive = isUserInactive(user.lastActivity)
+                    const daysSinceActivity = getDaysSinceActivity(user.lastActivity)
+                    
+                    return (
+                      <tr key={user.id} className={isInactive ? 'bg-red-50' : ''}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {user.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {user.phone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            user.status === 'active' && !isInactive
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {user.status === 'active' && !isInactive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1244,21 +1428,34 @@ export default function AdminDashboard() {
                   }`}
                 >
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          notification.type === 'success' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {notification.type === 'success' ? 'Purchase' : 'Sign Up'}
+                        </span>
+                        {!notification.read && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            New
+                          </span>
+                        )}
+                      </div>
                       <p className={`font-medium ${
                         notification.read ? 'text-gray-600' : 'text-blue-800'
                       }`}>
                         {notification.message}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
-                        Type: {notification.type} | 
-                        Status: {notification.read ? 'Read' : 'Unread'}
+                        {notification.timestamp}
                       </p>
                     </div>
                     {!notification.read && (
                       <button
                         onClick={() => markNotificationRead(notification.id)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs ml-4"
                       >
                         Mark Read
                       </button>
