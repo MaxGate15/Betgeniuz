@@ -3,36 +3,63 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { reference, packageName } = await request.json();
-    
-    // In a real application, you would:
-    // 1. Verify the payment with Paystack using their API
-    // 2. Check if the payment was successful
-    // 3. Update your database with the purchase
-    // 4. Send confirmation email to user
-    
-    console.log(`Verifying payment for ${packageName} with reference: ${reference}`);
-    
-    // Mock verification - in production, verify with Paystack
-    const isPaymentValid = true; // This would be determined by Paystack API response
-    
-    if (isPaymentValid) {
-      return NextResponse.json({ 
-        success: true, 
+
+    if (!reference) {
+      return NextResponse.json(
+        { success: false, message: 'Missing reference' },
+        { status: 400 }
+      );
+    }
+
+    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!secretKey) {
+      console.error('PAYSTACK_SECRET_KEY is not set');
+      return NextResponse.json(
+        { success: false, message: 'Server payment config missing' },
+        { status: 500 }
+      );
+    }
+
+    const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}` , {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    const data = await verifyRes.json();
+
+    if (!verifyRes.ok) {
+      console.error('Paystack verify error:', data);
+      return NextResponse.json(
+        { success: false, message: data?.message || 'Verification failed' },
+        { status: 400 }
+      );
+    }
+
+    const status = data?.data?.status;
+
+    if (status === 'success') {
+      return NextResponse.json({
+        success: true,
         message: 'Payment verified successfully',
         reference,
-        packageName 
+        packageName,
+        grantAccess: true
       });
-    } else {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'Payment verification failed' 
-      }, { status: 400 });
     }
+
+    return NextResponse.json(
+      { success: false, message: 'Payment not successful', status },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Payment verification error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: 'Internal server error' 
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

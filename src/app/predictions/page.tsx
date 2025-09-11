@@ -9,7 +9,12 @@ import { VIP_PACKAGES } from '@/config/paystack'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function Predictions() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, isLoading } = useAuth()
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      window.location.href = '/login'
+    }
+  }, [isLoading, isLoggedIn])
   const [activeTab, setActiveTab] = useState('today')
   const [showBookingPopup, setShowBookingPopup] = useState(false)
   const [vipResultsUpdated, setVipResultsUpdated] = useState({

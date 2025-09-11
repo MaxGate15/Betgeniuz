@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 
 export default function Login() {
@@ -8,12 +8,25 @@ export default function Login() {
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     firstName: '',
-    lastName: '',
-    plan: ''
+    lastName: ''
   })
+
+  // Open Sign Up tab when accessed via /login?register=true
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('register') === 'true') {
+        setIsLogin(false)
+        setIsForgotPassword(false)
+      }
+    } catch (err) {
+      // no-op
+    }
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -54,9 +67,10 @@ export default function Login() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        phone: formData.phone,
         initials: `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`.toUpperCase(),
         memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        vipStatus: formData.plan ? 'Premium' : 'Free',
+        vipStatus: 'Free',
         successRate: '0%',
         totalPredictions: 0,
         winsThisMonth: 0
@@ -144,6 +158,8 @@ export default function Login() {
                     placeholder="Enter your email or username"
                   />
                 </div>
+
+                {/* Phone removed from Sign In */}
 
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
@@ -248,6 +264,22 @@ export default function Login() {
 
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    required
+                    pattern="[+0-9\s-]{7,15}"
+                    className="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#f59e0b] transition-colors"
+                    placeholder="e.g. +233 24 123 4567"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
                     Password
                   </label>
                   <input
@@ -276,22 +308,7 @@ export default function Login() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-gray-300 text-sm font-medium mb-2">
-                    Choose Plan (Optional)
-                  </label>
-                  <select
-                    name="plan"
-                    value={formData.plan}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#f59e0b] transition-colors"
-                  >
-                    <option value="">Start with Free</option>
-                    <option value="basic">Basic VIP - $29/month</option>
-                    <option value="premium">Premium VIP - $79/month</option>
-                    <option value="elite">Elite VIP - $149/month</option>
-                  </select>
-                </div>
+                {/* Plan selection removed from Sign Up */}
 
                 <div className="flex items-center">
                   <input type="checkbox" required className="mr-2 text-[#f59e0b]" />

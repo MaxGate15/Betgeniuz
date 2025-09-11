@@ -1,10 +1,26 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { VIP_PACKAGES } from '@/config/paystack';
 import Navbar from '@/components/Navbar';
 
 export default function Dashboard() {
-  const { userData } = useAuth();
+  const { userData, isLoggedIn, isLoading } = useAuth();
+  const [purchased, setPurchased] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      window.location.href = '/login'
+    }
+  }, [isLoading, isLoggedIn])
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
+      if (Array.isArray(saved)) setPurchased(saved)
+    } catch {}
+  }, [])
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -52,13 +68,49 @@ export default function Dashboard() {
                   </div>
                 </div>
                 
-          {/* Recent Activity Card */}
+          {/* Games Purchased */}
           <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Activity</h3>
-            <div className="text-center py-8">
-              <p className="text-gray-500">No recent activity yet.</p>
-            </div>
-                </div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Games Purchased</h3>
+            {purchased.length === 0 ? (
+              <p className="text-gray-500">No purchases yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {purchased.map((pkg) => {
+                  const entry = Object.values(VIP_PACKAGES).find(p => p.name === pkg) as any
+                  return (
+                    <div key={pkg} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-gray-800">{pkg}</div>
+                          <div className="text-sm text-gray-500">Booking Codes</div>
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Sporty:</span>
+                            <button onClick={() => navigator.clipboard.writeText(entry?.bookingCodes?.sporty)} className="text-blue-600 underline">
+                              {entry?.bookingCodes?.sporty || '-'}
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>MSport:</span>
+                            <button onClick={() => navigator.clipboard.writeText(entry?.bookingCodes?.msport)} className="text-blue-600 underline">
+                              {entry?.bookingCodes?.msport || '-'}
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Football.com:</span>
+                            <button onClick={() => navigator.clipboard.writeText(entry?.bookingCodes?.football)} className="text-blue-600 underline">
+                              {entry?.bookingCodes?.football || '-'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
               </div>
             </div>
 

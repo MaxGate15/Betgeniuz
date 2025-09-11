@@ -100,28 +100,47 @@ export default function Home() {
               </button>
             </div>
             
-            {/* Date Picker Icon - Separate from tabs */}
+            {/* Date Picker Icon - trigger native picker reliably */}
             <div className="relative">
-              <input 
-                type="date" 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              <input
+                id="date-picker"
+                type="date"
+                className="sr-only"
                 onChange={(e) => {
                   if (e.target.value) {
-                    setActiveTab('custom');
-                    // You can handle the custom date here
+                    setActiveTab('custom')
+                    // handle custom date here if needed
                   }
                 }}
-                id="date-picker"
+                ref={(el) => {
+                  // attach to window for button handler below
+                  // @ts-ignore
+                  window.__datePickerEl = el
+                }}
               />
-              <label 
-                htmlFor="date-picker"
-                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer transition-colors border border-gray-200 block"
+              <button
+                type="button"
+                onClick={() => {
+                  // Prefer showPicker where supported
+                  const el = (window as any).__datePickerEl as HTMLInputElement | undefined
+                  if (el) {
+                    // @ts-ignore
+                    if (typeof el.showPicker === 'function') {
+                      // @ts-ignore
+                      el.showPicker()
+                    } else {
+                      el.click()
+                      el.focus()
+                    }
+                  }
+                }}
+                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
                 title="Pick a custom date"
               >
                 <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-              </label>
+              </button>
             </div>
           </div>
           

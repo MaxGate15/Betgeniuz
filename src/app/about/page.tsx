@@ -10,6 +10,9 @@ export default function AboutPage() {
     window.location.href = '/predictions'
   }
 
+  const vipHref = isLoggedIn ? '/vip' : '/login'
+  const predictionsHref = isLoggedIn ? '/predictions' : '/login'
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar onPredictionsClick={handlePredictionsClick} />
@@ -213,13 +216,13 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="/vip" 
+              href={vipHref} 
               className="bg-[#f59e0b] hover:bg-[#d97706] text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
             >
               View VIP Packages
             </a>
             <a 
-              href="/predictions" 
+              href={predictionsHref} 
               className="border-2 border-white text-white hover:bg-white hover:text-[#191970] px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
             >
               See Predictions

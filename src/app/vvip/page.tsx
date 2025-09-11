@@ -1,8 +1,16 @@
 'use client'
 
 import Navbar from '@/components/Navbar'
+import { useAuth } from '@/hooks/useAuth'
+import { useEffect } from 'react'
 
 export default function VVIP() {
+  const { isLoggedIn, isLoading } = useAuth()
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      window.location.href = '/login'
+    }
+  }, [isLoading, isLoggedIn])
   return (
     <main className="min-h-screen bg-[#0f172a] text-white">
       <Navbar onPredictionsClick={() => window.location.href = '/predictions'} />

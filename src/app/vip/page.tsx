@@ -9,7 +9,12 @@ import { VIP_PACKAGES } from '@/config/paystack'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function VIP() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, isLoading } = useAuth()
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      window.location.href = '/login'
+    }
+  }, [isLoading, isLoggedIn])
   const [vipResultsUpdated, setVipResultsUpdated] = useState({
     vip1: false,
     vip2: true,
@@ -30,6 +35,12 @@ export default function VIP() {
   const [selectedLocation, setSelectedLocation] = useState<'ghana' | 'not-ghana' | null>(null)
   const [purchasedPackages, setPurchasedPackages] = useState<string[]>([])
   const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null)
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
+      if (Array.isArray(saved)) setPurchasedPackages(saved)
+    } catch {}
+  }, [])
 
   const handleBuyNowClick = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
     if (!isLoggedIn) {
@@ -61,16 +72,20 @@ export default function VIP() {
   }
 
   const handlePaymentSuccess = (reference: string) => {
-    console.log('Payment successful:', reference)
+    try {
+      // Persist purchased packages to localStorage for dashboard access
+      const prev = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
+      const next = Array.from(new Set([...(Array.isArray(prev) ? prev : []), selectedVipPackage]))
+      localStorage.setItem('purchasedPackages', JSON.stringify(next))
+    } catch {}
+
     setShowPaymentModal(false)
     setShowLocationModal(false)
     setShowNonGhanaModal(false)
     setActiveCardIndex(null)
-    
-    // Add to purchased packages
-    if (selectedVipPackage) {
-      setPurchasedPackages(prev => [...prev, selectedVipPackage])
-    }
+
+    // Redirect to dashboard after purchase
+    window.location.href = '/dashboard?from=payment_success'
   }
 
   return (
@@ -102,14 +117,20 @@ export default function VIP() {
                 </div>
               )}
               
-              {/* Sample Matches */}
+              {/* Sample Matches - Locked until purchase */}
               <div className="mb-2">
+                {!purchasedPackages.includes('VIP 1') && (
+                  <div className="bg-gray-200 text-gray-700 text-sm font-semibold py-3 px-4 rounded mb-4">
+                    🔒 Locked — Purchase VIP 1 to view games and booking codes
+                  </div>
+                )}
                 {/* Sold Out Banner - Only show when sold out and results not updated */}
-                {vipSoldOut.vip1 && !vipResultsUpdated.vip1 && (
+                {purchasedPackages.includes('VIP 1') && vipSoldOut.vip1 && !vipResultsUpdated.vip1 && (
                   <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
                     SOLD OUT
                   </div>
                 )}
+                {purchasedPackages.includes('VIP 1') && (
                 <div className="space-y-2">
                   {/* Match 1 */}
                   <div className="text-left">
@@ -165,13 +186,36 @@ export default function VIP() {
                     ) : null}
                   </div>
                 </div>
+                )}
               </div>
               
               {!vipResultsUpdated.vip1 && (
                 <div>
                   {purchasedPackages.includes('VIP 1') ? (
-                    <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                      ✓ Purchased
+                    <div className="space-y-2">
+                      <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                        ✓ Purchased — Booking Codes
+                      </div>
+                      <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Sporty:</span>
+                          <button onClick={() => navigator.clipboard.writeText(VIP_PACKAGES.vip1.bookingCodes.sporty)} className="text-[#191970] underline">
+                            {VIP_PACKAGES.vip1.bookingCodes.sporty}
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">MSport:</span>
+                          <button onClick={() => navigator.clipboard.writeText(VIP_PACKAGES.vip1.bookingCodes.msport)} className="text-[#191970] underline">
+                            {VIP_PACKAGES.vip1.bookingCodes.msport}
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Football.com:</span>
+                          <button onClick={() => navigator.clipboard.writeText(VIP_PACKAGES.vip1.bookingCodes.football)} className="text-[#191970] underline">
+                            {VIP_PACKAGES.vip1.bookingCodes.football}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <button 

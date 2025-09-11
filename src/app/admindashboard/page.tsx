@@ -109,6 +109,7 @@ export default function AdminDashboard() {
   const [smsRecipients, setSmsRecipients] = useState<'all' | 'custom'>('all')
   const [customNumbers, setCustomNumbers] = useState('')
   const [isSendingSms, setIsSendingSms] = useState(false)
+  const [isBookingAttached, setIsBookingAttached] = useState(false)
 
   // Check authentication on component mount
   useEffect(() => {
@@ -571,9 +572,11 @@ export default function AdminDashboard() {
                </div>
                           <div className="flex items-center space-x-2">
                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              slip.status === 'active' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
+                              slip.status === 'updated'
+                                ? 'bg-green-100 text-green-800'
+                                : slip.status === 'uploaded'
+                                  ? 'bg-gray-100 text-gray-800'
+                                  : 'bg-blue-100 text-blue-800'
                             }`}>
                               {slip.status}
                             </span>
@@ -790,7 +793,32 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+              {/* Footer action to push updates to users */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                <button
+                  onClick={() => {
+                    if (!selectedSlip) return
+                    const resultsSummary = selectedSlip.games.map((g: any, idx: number) => `${idx + 1}. ${g.homeTeam} vs ${g.awayTeam} — ${g.result || 'pending'}`).join('\n')
+                    const hasAnyResult = selectedSlip.games.some((g: any) => g.result && g.result !== 'pending')
+                    if (!hasAnyResult) {
+                      alert('Please mark at least one game as Won/Lost before updating users.')
+                      return
+                    }
+                    const confirmed = confirm('Send results update to users for this slip?')
+                    if (!confirmed) return
+                    // Simulate pushing update to users
+                    alert(`Users updated with match results for ${selectedSlip.name}:\n\n${resultsSummary}`)
+                    // Mark slip as updated for visual feedback
+                    const updated = uploadedSlips.map((s: any) => s.id === selectedSlip.id ? { ...s, status: 'updated' } : s)
+                    setUploadedSlips(updated)
+                    setSelectedSlip(updated.find((s: any) => s.id === selectedSlip.id))
+                  }}
+                  className="bg-[#191970] hover:bg-[#2e2e8f] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                >
+                  Update
+                </button>
               </div>
+            </div>
             )}
 
             {/* Loaded Games Results - SportyBet Betting Slip Format */}
@@ -1014,8 +1042,11 @@ export default function AdminDashboard() {
                               className="w-full px-3 py-2 border rounded text-sm"
                             />
                             <p className="text-[11px] text-gray-500 mt-2">Codes will be attached to this {activeFilter === 'free' ? 'Free' : activeFilter.toUpperCase()} slip on upload.</p>
-          </div>
-                 )}
+                            <div className="flex justify-end mt-3">
+                              <button onClick={() => { setIsBookingAttached(true); setShowCodePanel(false) }} className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">Attach</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <button
                                               onClick={() => {
@@ -1027,7 +1058,7 @@ export default function AdminDashboard() {
                           games: [...loadedGames],
                           totalOdds: loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2),
                           createdAt: new Date().toLocaleString(),
-                          status: 'active',
+                          status: 'uploaded',
                           bookingCodes: {
                             sporty: sportyCodeInput || loadedGames[0]?.bookingCode || '',
                             msport: msportCodeInput || '',
@@ -1048,6 +1079,7 @@ export default function AdminDashboard() {
                         setLoadInput('')
                         setSportyCodeInput('')
                         setMsportCodeInput('')
+                        setIsBookingAttached(false)
                         setShowCodePanel(false)
                         
                         // Clear from category storage
