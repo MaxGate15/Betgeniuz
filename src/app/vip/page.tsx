@@ -242,7 +242,7 @@ export default function VIP() {
                       onClick={() => handleBuyNowClick('vip1', 0)}
                       className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                     >
-                      Buy Now {adminVipPackages.vip1?.price || 'GHS 100'}
+                      Buy Now {(adminVipPackages.vip1 as any)?.price || 'GHS 100'}
                     </button>
                   )}
                 </div>
@@ -369,7 +369,7 @@ export default function VIP() {
                   onClick={() => handleBuyNowClick('vip2', 1)}
                   className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                 >
-                  Buy Now {adminVipPackages.vip2?.price || 'GHS 200'}
+                  Buy Now {(adminVipPackages.vip2 as any)?.price || 'GHS 200'}
                 </button>
               )}
               
@@ -539,7 +539,7 @@ export default function VIP() {
                   onClick={() => handleBuyNowClick('vip3', 2)}
                   className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                 >
-                  Buy Now {adminVipPackages.vip3?.price || 'GHS 300'}
+                  Buy Now {(adminVipPackages.vip3 as any)?.price || 'GHS 300'}
                 </button>
               )}
               
