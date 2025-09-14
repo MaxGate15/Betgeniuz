@@ -37,7 +37,9 @@ export default function Dashboard() {
           {/* Welcome Card */}
           <div className="bg-white p-6 rounded-b-lg shadow-sm">
             <h2 className="text-xl font-bold text-gray-800">
-              Welcome back, {userData?.username || 'User'}!
+              
+              Welcome back, {(userData as any)?.username || 'User'}!
+
             </h2>
                   </div>
 
