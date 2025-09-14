@@ -31,7 +31,8 @@ export default function Settings() {
                     </label>
                     <input
                       type="text"
-                      value={userData?.username || ''}
+                      value={(userData as any)?.username || ''}
+
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       readOnly
                     />
@@ -42,7 +43,7 @@ export default function Settings() {
                     </label>
                     <input
                       type="email"
-                      value={userData?.email || ''}
+                      value={(userData as any)?.email || ''}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       readOnly
                     />
