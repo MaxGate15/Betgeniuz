@@ -1427,7 +1427,9 @@ export default function AdminDashboard() {
                  {vipPackages.map((pkg) => (
                    <div key={pkg.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
                      <h3 className="text-lg font-bold text-gray-900 mb-4">
-                       {pkg.name.replace(/^vip(\d)$/i, (_, n) => `VIP ${n}`)}
+                      
+                       {pkg.name.replace(/^vip(\d)$/i, (_: unknown, n: string) => `VIP ${n}`)
+}
                      </h3>
                      <div className="mb-2">
                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${pkg.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
