@@ -9,7 +9,9 @@ export default function Security() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState(userData?.phoneNumber || '');
+  const [phoneNumber, setPhoneNumber] = useState(
+    (userData as { phoneNumber?: string })?.phoneNumber || ''
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
