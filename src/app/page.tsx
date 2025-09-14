@@ -407,7 +407,6 @@ export default function Home() {
                 <li><a href="#" className="text-indigo-200 hover:text-white transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="text-indigo-200 hover:text-white transition-colors">Terms of Service</a></li>
                 <li><a href="#" className="text-indigo-200 hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="/admin/login" className="text-indigo-200 hover:text-white transition-colors text-sm">Admin Login</a></li>
               </ul>
             </div>
           </div>
