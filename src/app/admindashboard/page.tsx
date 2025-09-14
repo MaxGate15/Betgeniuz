@@ -20,7 +20,7 @@ export default function AdminDashboard() {
       setUnreadCountLoading(true);
       setUnreadCountError('');
       try {
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/notifications/unread/count');
+        const res = await fetch('https://api.betgeniuz.com/notifications/unread/count');
         if (!res.ok) throw new Error('Failed to fetch unread notifications count');
         const num = await res.json();
         setUnreadCount(typeof num === 'number' ? num : null);
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
       setSlipsError('');
       try {
         const token = localStorage.getItem('accessToken');
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/all-bookings', {
+        const res = await fetch('https://api.betgeniuz.com/games/all-bookings', {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         if (!res.ok) throw new Error('Failed to fetch betting slips');
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
       setVipLoading(true);
       setVipError('');
       try {
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/vip-list');
+        const res = await fetch('https://api.betgeniuz.com/games/vip-list');
         if (!res.ok) throw new Error('Failed to fetch VIP packages');
         const data = await res.json();
         setVipPackages(Array.isArray(data) ? data : []);
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
       setNotificationsLoading(true);
       setNotificationsError('');
       try {
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/notifications/all');
+        const res = await fetch('https://api.betgeniuz.com/notifications/all');
         if (!res.ok) throw new Error('Failed to fetch notifications');
         const data = await res.json();
         // Ensure data is an array and fields are preserved
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
       setUsersLoading(true);
       setUsersError('');
       try {
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/all-users');
+        const res = await fetch('https://api.betgeniuz.com/auth/all-users');
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
         // Map API response to include required fields with defaults
@@ -294,7 +294,7 @@ export default function AdminDashboard() {
   const markNotificationRead = async (id: number) => {
   try {
     // Call the API to mark as read
-    const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/notifications/${id}/read`, {
+    const res = await fetch(`https://api.betgeniuz.com/notifications/${id}/read`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -373,7 +373,7 @@ export default function AdminDashboard() {
       setTotalUsersError('')
       try {
         const token = localStorage.getItem('accessToken')
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/total-users', {
+        const res = await fetch('https://api.betgeniuz.com/auth/total-users', {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         })
         if (!res.ok) throw new Error('Failed to fetch total users')
@@ -416,7 +416,7 @@ export default function AdminDashboard() {
   const loadGamesFromAPI = async (bookingCode: string, category: string) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/load-booking/${bookingCode}`)
+      const res = await fetch(`https://api.betgeniuz.com/games/load-booking/${bookingCode}`)
       if (!res.ok) throw new Error('Failed to load games')
       const data = await res.json()
       // Map API response to local game format
@@ -471,7 +471,7 @@ export default function AdminDashboard() {
         games
       }
       console.log('Uploading slip:', body)
-      const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/upload-booking', {
+      const res = await fetch('https://api.betgeniuz.com/games/upload-booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -1446,7 +1446,7 @@ export default function AdminDashboard() {
                            setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: true }));
                            setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: '' }));
                            try {
-                             const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/mark-sold-out/${pkg.id}`, { method: 'POST' });
+                             const res = await fetch(`https://api.betgeniuz.com/games/mark-sold-out/${pkg.id}`, { method: 'POST' });
                              if (!res.ok) throw new Error('Failed to mark as sold out');
                              setVipPackages(vipPackages.map(p => p.id === pkg.id ? { ...p, available: false } : p));
                            } catch (err: any) {
@@ -1466,7 +1466,7 @@ export default function AdminDashboard() {
                            setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: true }));
                            setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: '' }));
                            try {
-                             const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/update-availability/${pkg.id}`, { method: 'POST' });
+                             const res = await fetch(`https://api.betgeniuz.com/games/update-availability/${pkg.id}`, { method: 'POST' });
                              if (!res.ok) throw new Error('Failed to mark as available');
                              setVipPackages(vipPackages.map(p => p.id === pkg.id ? { ...p, available: true } : p));
                            } catch (err: any) {

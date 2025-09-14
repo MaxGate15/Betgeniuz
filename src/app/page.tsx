@@ -52,16 +52,16 @@ export default function Home() {
         let url = '';
         let dateStr = '';
         if (activeTab === 'today' && !selectedDate) {
-          url = 'https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/free-bookings';
+          url = 'https://api.betgeniuz.com/games/free-bookings';
         } else {
           // Use selectedDate if custom, else get date from tab
           dateStr = selectedDate || getDateString(activeTab);
           // If dateStr is today, use free-bookings endpoint
           const todayStr = getDateString('today');
           if (dateStr === todayStr) {
-            url = 'https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/free-bookings';
+            url = 'https://api.betgeniuz.com/games/free-bookings';
           } else {
-            url = `https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/other-games?date=${dateStr}`;
+            url = `https://api.betgeniuz.com/games/other-games?date=${dateStr}`;
           }
         }
         const res = await fetch(url);

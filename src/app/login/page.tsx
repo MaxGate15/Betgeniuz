@@ -88,7 +88,7 @@ export default function Login() {
       }
       // API login
       try {
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/login', {
+        const res = await fetch('https://api.betgeniuz.com/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -130,7 +130,7 @@ export default function Login() {
       setPasswordError('')
       // API signup
       try {
-        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/sign-up', {
+        const res = await fetch('https://api.betgeniuz.com/auth/sign-up', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
