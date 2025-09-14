@@ -12,8 +12,11 @@ export default function Login() {
     password: '',
     confirmPassword: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    username: '', // for signup
   })
+  const [apiError, setApiError] = useState('')
+  const [apiLoading, setApiLoading] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [passwordMatch, setPasswordMatch] = useState(false)
 
@@ -71,63 +74,87 @@ export default function Login() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setApiError('')
+    setApiLoading(true)
     if (isLogin) {
-      // Check if it's admin login
+      // Admin login shortcut
       if (formData.email === 'admin' && formData.password === 'admin123') {
-        // Admin login - redirect to admin dashboard
         localStorage.setItem('adminLoggedIn', 'true')
         window.location.href = '/admindashboard'
-      } else {
-        // Regular user login - store user data and redirect to user dashboard
-        const userData = {
-          firstName: formData.email.split('@')[0] || 'User',
-          lastName: 'Doe',
-          email: formData.email,
-          initials: formData.email.split('@')[0]?.substring(0, 2).toUpperCase() || 'U',
-          memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-          vipStatus: 'Premium',
-          successRate: '87%',
-          totalPredictions: 156,
-          winsThisMonth: 23
-        }
-        
-        localStorage.setItem('userLoggedIn', 'true')
-        localStorage.setItem('userData', JSON.stringify(userData))
-        window.location.href = '/'
+        setApiLoading(false)
+        return
       }
+      // API login
+      try {
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email_or_username: formData.email,
+            password: formData.password
+          })
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setApiError(data.detail || 'Login failed')
+        } else {
+          // Save token/user info as needed
+          localStorage.setItem('userLoggedIn', 'true')
+          localStorage.setItem('userData', JSON.stringify(data))
+          localStorage.setItem('accessToken', data.access_token)
+          if (data.is_admin === 1 || data.is_admin === true) {
+            localStorage.setItem('adminLoggedIn', 'true')
+            window.location.href = '/admindashboard'
+          } else {
+            window.location.href = '/'
+          }
+        }
+      } catch (err) {
+        setApiError('Network error. Please try again.')
+      }
+      setApiLoading(false)
     } else {
       // Registration - validate passwords match first
       if (formData.password !== formData.confirmPassword) {
         setPasswordError('Passwords do not match')
+        setApiLoading(false)
         return
       }
-      
       if (formData.password.length < 6) {
         setPasswordError('Password must be at least 6 characters long')
+        setApiLoading(false)
         return
       }
-      
-      // Clear any previous password errors
       setPasswordError('')
-      
-      const userData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        initials: `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`.toUpperCase(),
-        memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        vipStatus: 'Free',
-        successRate: '0%',
-        totalPredictions: 0,
-        winsThisMonth: 0
+      // API signup
+      try {
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/sign-up', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: formData.username || formData.email.split('@')[0] || '',
+            email: formData.email,
+            password: formData.password,
+            phone_number: formData.phone,
+            is_superuser: false,
+            is_staff: false
+          })
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setApiError(data.detail || 'Signup failed')
+        } else {
+          // Optionally auto-login after signup
+          localStorage.setItem('userLoggedIn', 'true')
+          localStorage.setItem('userData', JSON.stringify(data))
+          window.location.href = '/'
+        }
+      } catch (err) {
+        setApiError('Network error. Please try again.')
       }
-      
-      localStorage.setItem('userLoggedIn', 'true')
-      localStorage.setItem('userData', JSON.stringify(userData))
-      window.location.href = '/'
+      setApiLoading(false)
     }
   }
 
@@ -207,9 +234,6 @@ export default function Login() {
                     placeholder="Enter your email or username"
                   />
                 </div>
-
-                {/* Phone removed from Sign In */}
-
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
                     Password
@@ -224,7 +248,9 @@ export default function Login() {
                     placeholder="Enter your password"
                   />
                 </div>
-
+                {apiError && (
+                  <p className="text-red-400 text-sm mt-1">{apiError}</p>
+                )}
                 <div className="flex items-center justify-between">
                   <label className="flex items-center">
                     <input type="checkbox" className="mr-2 text-[#f59e0b]" />
@@ -238,15 +264,13 @@ export default function Login() {
                     Forgot password?
                   </button>
                 </div>
-
                 <button
                   type="submit"
                   className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 rounded-lg font-medium transition-colors"
+                  disabled={apiLoading}
                 >
-                  Sign In
+                  {apiLoading ? 'Signing In...' : 'Sign In'}
                 </button>
-
-
                 <div className="text-center">
                   <span className="text-gray-400">Don't have an account? </span>
                   <button
@@ -295,22 +319,34 @@ export default function Login() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
-                    Email or Username
+                    Username
                   </label>
                   <input
                     type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#f59e0b] transition-colors"
+                    placeholder="Choose a username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
                     className="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#f59e0b] transition-colors"
-                    placeholder="Enter your email or username"
+                    placeholder="Enter your email"
                   />
                 </div>
-
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
                     Phone Number
@@ -326,7 +362,6 @@ export default function Login() {
                     placeholder="e.g. +233 24 123 4567"
                   />
                 </div>
-
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
                     Password
@@ -343,7 +378,6 @@ export default function Login() {
                     placeholder="Create a password"
                   />
                 </div>
-
                 <div>
                   <label className="block text-gray-300 text-sm font-medium mb-2">
                     Confirm Password
@@ -377,9 +411,9 @@ export default function Login() {
                     <p className="text-green-400 text-sm mt-1">✓ Passwords match</p>
                   )}
                 </div>
-
-                {/* Plan selection removed from Sign Up */}
-
+                {apiError && (
+                  <p className="text-red-400 text-sm mt-1">{apiError}</p>
+                )}
                 <div className="flex items-center">
                   <input type="checkbox" required className="mr-2 text-[#f59e0b]" />
                   <span className="text-sm text-gray-300">
@@ -393,14 +427,13 @@ export default function Login() {
                     </a>
                   </span>
                 </div>
-
                 <button
                   type="submit"
                   className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 rounded-lg font-medium transition-colors"
+                  disabled={apiLoading}
                 >
-                  Create Account
+                  {apiLoading ? 'Creating Account...' : 'Create Account'}
                 </button>
-
                 <div className="text-center">
                   <span className="text-gray-400">Already have an account? </span>
                   <button

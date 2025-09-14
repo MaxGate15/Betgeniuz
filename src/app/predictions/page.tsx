@@ -47,6 +47,64 @@ export default function Predictions() {
     }
   }
 
+  
+    // State for predictions data from API
+    const [predictions, setPredictions] = useState<any[]>([]);
+    const [predictionsLoading, setPredictionsLoading] = useState(false);
+    const [predictionsError, setPredictionsError] = useState('');
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  
+    // Helper to get YYYY-MM-DD for today/yesterday/tomorrow
+    const getDateString = (tab: string): string => {
+      const today = new Date();
+      if (tab === 'today') return today.toISOString().slice(0, 10);
+      if (tab === 'yesterday') {
+        const d = new Date(today);
+        d.setDate(today.getDate() - 1);
+        return d.toISOString().slice(0, 10);
+      }
+      if (tab === 'tomorrow') {
+        const d = new Date(today);
+        d.setDate(today.getDate() + 1);
+        return d.toISOString().slice(0, 10);
+      }
+      // fallback
+      return today.toISOString().slice(0, 10);
+    };
+  
+    // Fetch predictions when activeTab or selectedDate changes
+    useEffect(() => {
+      const fetchPredictions = async () => {
+        setPredictionsLoading(true);
+        setPredictionsError('');
+        try {
+          let url = '';
+          let dateStr = '';
+          if (activeTab === 'today' && !selectedDate) {
+            url = 'https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/free-bookings';
+          } else {
+            // Use selectedDate if custom, else get date from tab
+            dateStr = selectedDate || getDateString(activeTab);
+            // If dateStr is today, use free-bookings endpoint
+            const todayStr = getDateString('today');
+            if (dateStr === todayStr) {
+              url = 'https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/free-bookings';
+            } else {
+              url = `https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/other-games?date=${dateStr}`;
+            }
+          }
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('Failed to fetch predictions');
+          const data = await res.json();
+          setPredictions(Array.isArray(data) ? data : []);
+        } catch (err: any) {
+          setPredictionsError(err?.message || 'Could not load predictions');
+        }
+        setPredictionsLoading(false);
+      };
+      fetchPredictions();
+    }, [activeTab, selectedDate]);
+
   const handleBuyNowClick = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
     if (!isLoggedIn) {
       window.location.href = '/login'
@@ -124,15 +182,32 @@ export default function Predictions() {
       <section className="py-12 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">
-            Today's Top Predictions
+            {(() => {
+              if (activeTab === 'today' && !selectedDate) return "Today's Top Predictions";
+              if (activeTab === 'yesterday') return "Yesterday's Top Predictions";
+              if (activeTab === 'tomorrow') return "Tomorrow's Top Predictions";
+              if (activeTab === 'custom' && selectedDate) {
+                // Format date as e.g. 15 September 2025
+                const d = new Date(selectedDate);
+                const day = d.getDate();
+                const month = d.toLocaleString('default', { month: 'long' });
+                const year = d.getFullYear();
+                return `${day} ${month} ${year}'s Top Predictions`;
+              }
+              // fallback for any other case
+              return "Top Predictions";
+            })()}
           </h2>
           
           {/* Date Filter Tabs */}
           <div className="flex justify-center items-center mb-8 space-x-4">
             {/* Date Range Tabs */}
             <div className="flex bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setActiveTab('yesterday')}
+              <button 
+                onClick={() => {
+                  setActiveTab('yesterday');
+                  setSelectedDate(null);
+                }}
                 className={`px-6 py-3 rounded-md font-medium transition-colors ${
                   activeTab === 'yesterday' 
                     ? 'bg-[#191970] text-white' 
@@ -141,8 +216,11 @@ export default function Predictions() {
               >
                 Yesterday
               </button>
-              <button
-                onClick={() => setActiveTab('today')}
+              <button 
+                onClick={() => {
+                  setActiveTab('today');
+                  setSelectedDate(null);
+                }}
                 className={`px-6 py-3 rounded-md font-medium transition-colors ${
                   activeTab === 'today' 
                     ? 'bg-[#191970] text-white' 
@@ -151,8 +229,11 @@ export default function Predictions() {
               >
                 Today
               </button>
-              <button
-                onClick={() => setActiveTab('tomorrow')}
+              <button 
+                onClick={() => {
+                  setActiveTab('tomorrow');
+                  setSelectedDate(null);
+                }}
                 className={`px-6 py-3 rounded-md font-medium transition-colors ${
                   activeTab === 'tomorrow' 
                     ? 'bg-[#191970] text-white' 
@@ -162,149 +243,93 @@ export default function Predictions() {
                 Tomorrow
               </button>
             </div>
-
-            {/* Date Picker Icon - Separate from tabs */}
+            {/* Date Picker Icon - trigger native picker reliably */}
             <div className="relative">
-              <input 
-                type="date" 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              <input
+                id="date-picker"
+                type="date"
+                className="sr-only"
                 onChange={(e) => {
                   if (e.target.value) {
                     setActiveTab('custom');
-                    // You can handle the custom date here
+                    setSelectedDate(e.target.value);
                   }
                 }}
-                id="date-picker"
+                ref={(el) => {
+                  // attach to window for button handler below
+                  // @ts-ignore
+                  window.__datePickerEl = el;
+                }}
               />
-              <label 
-                htmlFor="date-picker"
-                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer transition-colors border border-gray-200 block"
+              <button
+                type="button"
+                onClick={() => {
+                  // Prefer showPicker where supported
+                  const el = (window as any).__datePickerEl as HTMLInputElement | undefined;
+                  if (el) {
+                    // @ts-ignore
+                    if (typeof el.showPicker === 'function') {
+                      // @ts-ignore
+                      el.showPicker();
+                    } else {
+                      el.click();
+                      el.focus();
+                    }
+                  }
+                }}
+                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
                 title="Pick a custom date"
               >
                 <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-              </label>
+              </button>
             </div>
           </div>
-
-          {/* Predictions List */}
+          
+          {/* Predictions List - Dynamic from API */}
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="space-y-3">
-              {/* Match 1 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">Over/Under</div>
-                    <div className="text-base font-bold text-gray-800">Navbahor vs PFC Sogdiana</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Over 2.5</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Match 2 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">Over/Under</div>
-                    <div className="text-base font-bold text-gray-800">Nice vs Benfica</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Over 2.5</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-            </div>
-          </div>
-        </div>
-
-              {/* Match 3 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">1X2 - 2UP</div>
-                    <div className="text-base font-bold text-gray-800">Basel vs Young Boys Bern</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Away</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Match 4 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">Over/Under</div>
-                    <div className="text-base font-bold text-gray-800">KKS Lech Poznan vs Crvena Zvezda</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Over 3.5</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  </div>
-                  </div>
-                </div>
-
-              {/* Match 5 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">1X2</div>
-                    <div className="text-base font-bold text-gray-800">Ludogorets vs Ferencvarosi Budapest</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Home</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  </div>
-                </div>
-                  </div>
-                  
-              {/* Match 6 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">Over/Under</div>
-                    <div className="text-base font-bold text-gray-800">Ranheim vs Moss FK</div>
-                    </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Over 2.5</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  </div>
-                </div>
-                  </div>
-
-              {/* Match 7 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">1X2</div>
-                    <div className="text-base font-bold text-gray-800">Egersunds IK vs Lillestrom SK</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Away</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                    </div>
+              {predictionsLoading && (
+                <div className="text-center text-blue-600 font-medium py-8">Loading predictions...</div>
+              )}
+              {predictionsError && !predictionsLoading && (
+                <div className="text-center text-red-600 font-medium py-8">{predictionsError}</div>
+              )}
+              {!predictionsLoading && !predictionsError && predictions.length === 0 && (
+                <div className="text-center text-gray-500 py-8">No predictions found.</div>
+              )}
+              {/* Render all games from all bookings */}
+              {!predictionsLoading && !predictionsError && predictions.length > 0 &&
+                predictions.flatMap((booking: any) =>
+                  (booking.games || []).map((game: any) => (
+                    <div key={game.id || `${booking.id}-${game.home}-${game.away}`} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="text-sm text-gray-500 mb-1">{game.tournament}</div>
+                          <div className="text-base font-bold text-gray-800">{game.home} vs {game.away}</div>
+                        </div>
+                        <div className="flex flex-col items-end min-w-[110px]">
+                            <div className="flex flex-col items-end">
+                            <span className="text-sm text-gray-500 font-semibold mb-1">
+                              Pick: 
+                           
+                              {game.prediction} </span>
+                            <span className="text-xs text-gray-600 mt-1">
+                              Odds: <span className="font-semibold">{game.odd}</span>
+                            </span>
+                            </div>
+                          <div className="w-3 h-3 mt-2 bg-yellow-400 rounded-full"></div>
+                        </div>
                       </div>
                     </div>
-
-              {/* Match 8 */}
-              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-500 mb-1">Over/Under</div>
-                    <div className="text-base font-bold text-gray-800">RB Salzburg vs Brugge</div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-base text-gray-800 font-medium">Over 2.5</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
+                  ))
+                )
+              }
             </div>
           </div>
 
+          
           {/* Booking Code Button */}
           <div className="mt-6 text-center">
             <button 
@@ -320,58 +345,59 @@ export default function Predictions() {
                 <div className="space-y-1">
                   {/* Sporty Code */}
                   <div className="bg-[#191970] text-white px-2 py-1 rounded flex items-center justify-between">
-                    <span className="text-xs font-medium">Sporty: ghdhdh</span>
-                    <button 
+                    <span className="text-xs font-medium">Sporty: {predictions[0].booking_code}</span>
+                <button 
                       onClick={() => {
-                        navigator.clipboard.writeText('ghdhdh');
+                        navigator.clipboard.writeText(predictions[0].booking_code);
                       }}
                       className="p-0.5 hover:bg-white hover:bg-opacity-20 rounded transition-colors"
-                      title="Copy code"
-                    >
+                  title="Copy code"
+                >
                       <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                         <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                      </svg>
-                    </button>
-                  </div>
-                  
+                  </svg>
+                </button>
+              </div>
+              
                   {/* MSport Code */}
-                  <div className="bg-[#191970] text-white px-2 py-1 rounded flex items-center justify-between">
+                  {/* <div className="bg-[#191970] text-white px-2 py-1 rounded flex items-center justify-between">
                     <span className="text-xs font-medium">MSport: jddhdh</span>
-                    <button 
+                <button 
                       onClick={() => {
                         navigator.clipboard.writeText('jddhdh');
                       }}
                       className="p-0.5 hover:bg-white hover:bg-opacity-20 rounded transition-colors"
-                      title="Copy code"
-                    >
+                  title="Copy code"
+                >
                       <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                         <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                      </svg>
-                    </button>
-                  </div>
-                  
+                  </svg>
+                </button>
+              </div>
+              
                   {/* Football.com Code */}
-                  <div className="bg-[#191970] text-white px-2 py-1 rounded flex items-center justify-between">
+                  {/* <div className="bg-[#191970] text-white px-2 py-1 rounded flex items-center justify-between">
                     <span className="text-xs font-medium">Football.com: abc123</span>
-                    <button 
+                <button 
                       onClick={() => {
                         navigator.clipboard.writeText('abc123');
                       }}
                       className="p-0.5 hover:bg-white hover:bg-opacity-20 rounded transition-colors"
-                      title="Copy code"
-                    >
+                  title="Copy code"
+                >
                       <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                         <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+                  </svg>
+                </button>
+              </div> */} 
+            </div>
           </div>
+            )}
+           </div>
+           
         </div>
       </section>
 

@@ -1,9 +1,124 @@
+
+  // Upload slip to API
+
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminDashboard() {
+  // Track loading and error state for each VIP package availability action
+  const [vipAvailabilityLoading, setVipAvailabilityLoading] = useState<{[id: number]: boolean}>({});
+  const [vipAvailabilityError, setVipAvailabilityError] = useState<{[id: number]: string}>({});
+  // Unread notifications count from API
+  const [unreadCount, setUnreadCount] = useState<number|null>(null);
+  const [unreadCountLoading, setUnreadCountLoading] = useState(false);
+  const [unreadCountError, setUnreadCountError] = useState('');
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      setUnreadCountLoading(true);
+      setUnreadCountError('');
+      try {
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/notifications/unread/count');
+        if (!res.ok) throw new Error('Failed to fetch unread notifications count');
+        const num = await res.json();
+        setUnreadCount(typeof num === 'number' ? num : null);
+      } catch (err) {
+        setUnreadCountError('Could not load unread notifications count');
+      }
+      setUnreadCountLoading(false);
+    };
+    fetchUnreadCount();
+  }, []);
+  // Fetch betting slips from backend on mount
+  useEffect(() => {
+    const fetchSlips = async () => {
+      setSlipsLoading(true);
+      setSlipsError('');
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/all-bookings', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error('Failed to fetch betting slips');
+        const data = await res.json();
+        // Normalize slips and games for UI based on API response
+        const normalized = (Array.isArray(data) ? data : []).map((item: any, idx: number) => {
+          const booking = item.booking || {};
+          const games = Array.isArray(item.games) ? item.games.map((g: any, i: number) => ({
+            id: g.id || i + 1,
+            home_team: g.home_team || '',
+            away_team: g.away_team || '',
+            odds: g.odds || '',
+            league: g.tournament || '',
+            date: g.match_day || '',
+            prediction: g.prediction || '',
+            result: g.result || g.match_status || 'pending',
+          })) : [];
+          // Calculate total odds if not present
+          const totalOdds = games.length > 0 ? games.reduce((acc: number, g: any) => acc * (parseFloat(g.odds) || 1), 1).toFixed(2) : 'N/A';
+          return {
+            id: booking.id || idx + 1,
+            name: booking.share_code || `Slip ${idx + 1}`,
+            totalOdds,
+            price: booking.price || '',
+            createdAt: booking.created_at || booking.deadline || '',
+            status: booking.status || 'uploaded',
+            games,
+            bookingCodes: {
+              sporty: booking.share_code || '',
+              msport: '',
+              football: ''
+            },
+            deadline: booking.deadline || '',
+            shareCode: booking.share_code || '',
+            shareURL: booking.share_url || '',
+            category: booking.category || '',
+          };
+        });
+        setUploadedSlips(normalized);
+        console.log('Fetched and normalized slips:', normalized);
+      } catch (err: any) {
+        setSlipsError(err?.message || 'Could not load betting slips');
+      }
+      setSlipsLoading(false);
+    };
+    fetchSlips();
+  }, []);
+    // State for VIP packages
+  const [vipPackages, setVipPackages] = useState<any[]>([]);
+  const [vipLoading, setVipLoading] = useState(false);
+  const [vipError, setVipError] = useState('');
+
+  useEffect(() => {
+    const fetchVipPackages = async () => {
+      setVipLoading(true);
+      setVipError('');
+      try {
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/vip-list');
+        if (!res.ok) throw new Error('Failed to fetch VIP packages');
+        const data = await res.json();
+        setVipPackages(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        setVipError(err?.message || 'Could not load VIP packages');
+      }
+      setVipLoading(false);
+    };
+    fetchVipPackages();
+  }, []);
+  // State for new game form
+  const [newGame, setNewGame] = useState({
+    homeTeam: '',
+    awayTeam: '',
+    prediction: '',
+    odds: '',
+    date: '',
+    league: '',
+    description: '',
+    category: 'free',
+    result: 'pending'
+  });
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [games, setGames] = useState([
@@ -20,149 +135,63 @@ export default function AdminDashboard() {
       available: true,
       category: 'free',
       result: 'pending'
-    },
-    {
-      id: 2,
-      homeTeam: 'Arsenal',
-      awayTeam: 'Chelsea',
-      prediction: 'Draw',
-      odds: '3.20',
-      status: 'pending',
-      date: '2024-01-16',
-      league: 'Premier League',
-      description: 'Evenly matched teams',
-      available: true,
-      category: 'vip1',
-      result: 'pending'
     }
-  ])
+  ]);
 
-  const [vipPackages, setVipPackages] = useState([
-    {
-      id: 1,
-      name: 'VIP 1',
-      price: 'GHS 100',
-      amount: 100,
-      description: 'Basic VIP package with daily predictions',
-      available: true,
-      features: ['Daily Predictions', 'Basic Support', 'Email Updates'],
-      bookingCodes: { sporty: 'SP12345', msport: 'MS12345', football: 'FB12345' }
-    },
-    {
-      id: 2,
-      name: 'VIP 2',
-      price: 'GHS 200',
-      amount: 200,
-      description: 'Premium VIP package with advanced features',
-      available: true,
-      features: ['Daily Predictions', 'Priority Support', 'WhatsApp Updates', 'Exclusive Tips'],
-      bookingCodes: { sporty: 'SP22345', msport: 'MS22345', football: 'FB22345' }
-    },
-    {
-      id: 3,
-      name: 'VIP 3',
-      price: 'GHS 300',
-      amount: 300,
-      description: 'Ultimate VIP package with all features',
-      available: true,
-      features: ['Daily Predictions', '24/7 Support', 'WhatsApp Updates', 'Exclusive Tips', 'Personal Consultation'],
-      bookingCodes: { sporty: 'SP32345', msport: 'MS32345', football: 'FB32345' }
-    }
-  ])
+  // Notifications state from API
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState('');
 
-  const [newGame, setNewGame] = useState({
-    homeTeam: '',
-    awayTeam: '',
-    prediction: '',
-    odds: '',
-    date: '',
-    league: '',
-    description: '',
-    category: 'free', // Default to free predictions
-    result: 'pending' // Default to pending
-  })
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setNotificationsLoading(true);
+      setNotificationsError('');
+      try {
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/notifications/all');
+        if (!res.ok) throw new Error('Failed to fetch notifications');
+        const data = await res.json();
+        // Ensure data is an array and fields are preserved
+        setNotifications(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        setNotificationsError(err?.message || 'Could not load notifications');
+      }
+      setNotificationsLoading(false);
+    };
+    fetchNotifications();
+  }, []);
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: 'New user signed up: user123', type: 'info', read: false, timestamp: '2024-12-15 10:30 AM' },
-    { id: 2, message: 'New user signed up: bettingpro', type: 'info', read: false, timestamp: '2024-12-18 2:15 PM' },
-    { id: 3, message: 'VIP package purchased by vipmember', type: 'success', read: false, timestamp: '2024-12-19 4:45 PM' },
-    { id: 4, message: 'New user signed up: recentuser', type: 'info', read: false, timestamp: '2024-12-22 9:20 AM' },
-    { id: 5, message: 'VIP package purchased by activeuser', type: 'success', read: true, timestamp: '2024-12-21 11:30 AM' },
-    { id: 6, message: 'Daily predictions updated', type: 'info', read: true, timestamp: '2024-12-20 8:00 AM' }
-  ])
+  const [users, setUsers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState('');
 
-  const [users, setUsers] = useState([
-    { 
-      id: 1, 
-      username: 'user123', 
-      email: 'user123@email.com', 
-      phone: '0551112222', 
-      status: 'active', 
-      vip: true,
-      lastActivity: '2024-12-15',
-      signUpDate: '2024-01-15'
-    },
-    { 
-      id: 2, 
-      username: 'bettingpro', 
-      email: 'pro@email.com', 
-      phone: '0243334444', 
-      status: 'active', 
-      vip: false,
-      lastActivity: '2024-12-18',
-      signUpDate: '2024-01-10'
-    },
-    { 
-      id: 3, 
-      username: 'newuser', 
-      email: 'new@email.com', 
-      phone: '0205556666', 
-      status: 'active', 
-      vip: false,
-      lastActivity: '2024-10-15',
-      signUpDate: '2023-12-01'
-    },
-    { 
-      id: 4, 
-      username: 'vipmember', 
-      email: 'vip@email.com', 
-      phone: '0277778888', 
-      status: 'active', 
-      vip: true,
-      lastActivity: '2024-12-19',
-      signUpDate: '2024-01-05'
-    },
-    { 
-      id: 5, 
-      username: 'olduser', 
-      email: 'old@email.com', 
-      phone: '0233334444', 
-      status: 'active', 
-      vip: false,
-      lastActivity: '2024-11-20',
-      signUpDate: '2023-11-15'
-    },
-    { 
-      id: 6, 
-      username: 'activeuser', 
-      email: 'active@email.com', 
-      phone: '0244445555', 
-      status: 'active', 
-      vip: true,
-      lastActivity: '2024-12-21',
-      signUpDate: '2024-01-01'
-    },
-    { 
-      id: 7, 
-      username: 'recentuser', 
-      email: 'recent@email.com', 
-      phone: '0255556666', 
-      status: 'active', 
-      vip: false,
-      lastActivity: '2024-12-22',
-      signUpDate: '2024-01-20'
-    }
-  ])
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setUsersLoading(true);
+      setUsersError('');
+      try {
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/all-users');
+        if (!res.ok) throw new Error('Failed to fetch users');
+        const data = await res.json();
+        // Map API response to include required fields with defaults
+        const mapped = (Array.isArray(data) ? data : []).map((u: any) => ({
+          id: u.id,
+          username: u.username,
+          email: u.email,
+          phone: u.phone,
+          status: u.status,
+          vip: typeof u.vip === 'boolean' ? u.vip : false,
+          lastActivity: u.lastActivity || '',
+          signUpDate: u.signUpDate || '',
+        }));
+        setUsers(mapped);
+      } catch (err: any) {
+        setUsersError(err?.message || 'Could not load users');
+      }
+      setUsersLoading(false);
+    };
+    fetchUsers();
+  }, []);
 
   const [filteredGames, setFilteredGames] = useState(games)
   const [activeFilter, setActiveFilter] = useState('all')
@@ -176,6 +205,8 @@ export default function AdminDashboard() {
     vip3: [] as any[]
   })
   const [uploadedSlips, setUploadedSlips] = useState<any[]>([])
+  const [slipsLoading, setSlipsLoading] = useState(false)
+  const [slipsError, setSlipsError] = useState('')
   const [selectedSlip, setSelectedSlip] = useState<any>(null)
   const [showCodePanel, setShowCodePanel] = useState(false)
   const [sportyCodeInput, setSportyCodeInput] = useState('')
@@ -260,11 +291,31 @@ export default function AdminDashboard() {
     router.push('/')
   }
 
-  const markNotificationRead = (id: number) => {
-    setNotifications(notifications.map(notif => 
-      notif.id === id ? { ...notif, read: true } : notif
-    ))
+  const markNotificationRead = async (id: number) => {
+  try {
+    // Call the API to mark as read
+    const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/notifications/${id}/read`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to mark notification as read");
+    }
+
+    // Update local state after success
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
   }
+};
+
 
   // Function to add new sign-up notification
   const addSignUpNotification = (username: string) => {
@@ -311,6 +362,31 @@ export default function AdminDashboard() {
         : user
     ))
   }
+  const [totalUsers, setTotalUsers] = useState<number|null>(null)
+  const [totalUsersLoading, setTotalUsersLoading] = useState(false)
+  const [totalUsersError, setTotalUsersError] = useState('')
+
+  // Fetch total users from API on mount
+  useEffect(() => {
+    const fetchTotalUsers = async () => {
+      setTotalUsersLoading(true)
+      setTotalUsersError('')
+      try {
+        const token = localStorage.getItem('accessToken')
+        const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/auth/total-users', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        })
+        if (!res.ok) throw new Error('Failed to fetch total users')
+        const num = await res.json()
+        setTotalUsers(num)
+      } catch (err) {
+        setTotalUsersError('Could not load total users')
+      }
+      setTotalUsersLoading(false)
+    }
+    fetchTotalUsers()
+  }, [])
+  
 
   const toggleUserVIP = (id: number) => {
     setUsers(users.map(user => 
@@ -335,135 +411,94 @@ export default function AdminDashboard() {
     return daysDifference
   }
 
-  // Mock API function to simulate loading games from SportyBet
-  const mockLoadGames = async (bookingCode: string, category: string) => {
+
+  // Real API function to load games from backend
+  const loadGamesFromAPI = async (bookingCode: string, category: string) => {
     setIsLoading(true)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Mock data based on category
-    const mockGames = {
-      free: [
-        {
-          id: Date.now() + 1,
-          homeTeam: 'Barcelona',
-          awayTeam: 'Real Madrid',
-          prediction: 'Over 2.5 Goals',
-          odds: '1.85',
-          status: 'active',
-          date: '2024-01-20',
-          league: 'La Liga',
-          description: 'El Clasico - High scoring match expected',
-          available: true,
-          category: 'free',
-          result: 'pending',
-          bookingCode: bookingCode,
-          platform: 'SportyBet'
-        },
-        {
-          id: Date.now() + 2,
-          homeTeam: 'Manchester City',
-          awayTeam: 'Arsenal',
-          prediction: 'Home Win',
-          odds: '2.10',
-          status: 'active',
-          date: '2024-01-21',
-          league: 'Premier League',
-          description: 'City strong at home',
-          available: true,
-          category: 'free',
-          result: 'pending',
-          bookingCode: bookingCode,
-          platform: 'SportyBet'
-        }
-      ],
-      vip1: [
-        {
-          id: Date.now() + 3,
-          homeTeam: 'Bayern Munich',
-          awayTeam: 'Borussia Dortmund',
-          prediction: 'Both Teams to Score',
-          odds: '1.75',
-          status: 'active',
-          date: '2024-01-22',
-          league: 'Bundesliga',
-          description: 'Der Klassiker - Goals expected',
-          available: true,
-          category: 'vip1',
-          result: 'pending',
-          bookingCode: bookingCode,
-          platform: 'SportyBet'
-        },
-        {
-          id: Date.now() + 4,
-          homeTeam: 'PSG',
-          awayTeam: 'Marseille',
-          prediction: 'PSG Win & Over 2.5',
-          odds: '2.45',
-          status: 'active',
-          date: '2024-01-23',
-          league: 'Ligue 1',
-          description: 'Le Classique - PSG dominance',
-          available: true,
-          category: 'vip1',
-          result: 'pending',
-          bookingCode: bookingCode,
-          platform: 'SportyBet'
-        }
-      ],
-      vip2: [
-        {
-          id: Date.now() + 5,
-          homeTeam: 'Juventus',
-          awayTeam: 'Inter Milan',
-          prediction: 'Under 2.5 Goals',
-          odds: '1.90',
-          status: 'active',
-          date: '2024-01-24',
-          league: 'Serie A',
-          description: 'Derby d\'Italia - Tight match',
-          available: true,
-          category: 'vip2',
-          result: 'pending',
-          bookingCode: bookingCode,
-          platform: 'SportyBet'
-        }
-      ],
-      vip3: [
-        {
-          id: Date.now() + 6,
-          homeTeam: 'Liverpool',
-          awayTeam: 'Chelsea',
-          prediction: 'Liverpool Win & Clean Sheet',
-          odds: '3.20',
-          status: 'active',
-          date: '2024-01-25',
-          league: 'Premier League',
-          description: 'Premium VIP prediction',
-          available: true,
-          category: 'vip3',
-          result: 'pending',
-          bookingCode: bookingCode,
-          platform: 'SportyBet'
-        }
-      ]
+    try {
+      const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/load-booking/${bookingCode}`)
+      if (!res.ok) throw new Error('Failed to load games')
+      const data = await res.json()
+      // Map API response to local game format
+      const games = (data.games || []).map((g: any, idx: number) => ({
+        id: Date.now() + idx,
+        homeTeam: g.home,
+        awayTeam: g.away,
+        prediction: g.prediction,
+        odds: g.odd,
+        status: 'active',
+        date: data.deadline,
+        league: g.tournament,
+        description: '',
+        available: true,
+        category,
+        result: 'pending',
+        bookingCode: bookingCode,
+        platform: 'SportyBet',
+        shareCode: data.shareCode,
+        shareURL: data.shareURL
+      }))
+      setGamesByCategory(prev => ({
+        ...prev,
+        [category]: [...(prev[category as keyof typeof prev] || []), ...games]
+      }))
+      setLoadedGames(games)
+      alert(`Successfully loaded ${games.length} games from SportyBet with booking code: ${bookingCode}`)
+    } catch (err) {
+      alert('Failed to load games. Please check the booking code and try again.')
     }
-    
-    const games = mockGames[category as keyof typeof mockGames] || []
-    
-    // Store games by category
-    setGamesByCategory(prev => ({
-      ...prev,
-      [category]: [...(prev[category as keyof typeof prev] || []), ...games]
-    }))
-    
-    // Set current loaded games for display
-    setLoadedGames(games)
     setIsLoading(false)
-    
-    // Show success message
-    alert(`Successfully loaded ${games.length} games from SportyBet with booking code: ${bookingCode}`)
+  }
+    const uploadSlip = async (slip: any) => {
+    try {
+      // Compose games array in required format
+      const games = (slip.games || []).map((g: any) => ({
+        home: g.homeTeam || g.home,
+        away: g.awayTeam || g.away,
+        tournament: g.league || g.tournament,
+        sport: g.sport || 'Football',
+        odd: g.odds || g.odd,
+        prediction: g.prediction,
+        match_status: g.match_status || 'pending',
+        match_day: g.match_day || slip.date || slip.deadline
+      }))
+      const body = {
+        shareCode: slip.shareCode,
+        shareURL: slip.shareURL,
+        deadline: slip.date || slip.deadline,
+        category: slip.category,
+        price: slip.price || '',
+        games
+      }
+      console.log('Uploading slip:', body)
+      const res = await fetch('https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/upload-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      if (!res.ok) {
+        const errText = await res.text();
+        let errorMsg = 'Failed to upload slip.';
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson.detail) {
+            if (Array.isArray(errJson.detail)) {
+              errorMsg += '\n' + errJson.detail.map((d: any) => d.msg).join('\n');
+            } else if (typeof errJson.detail === 'string') {
+              errorMsg += '\n' + errJson.detail;
+            }
+          }
+        } catch {}
+        alert(errorMsg);
+        console.error('Upload error:', errText);
+        return;
+      }
+      alert('Slip uploaded successfully!');
+      setUploadedSlips(prev => prev.map(s => s.id === slip.id ? { ...s, status: 'uploaded' } : s));
+    } catch (err) {
+      alert('Failed to upload slip. See console for details.');
+      console.error('Upload error:', err);
+    }
   }
 
   const handleLoadGames = () => {
@@ -477,7 +512,7 @@ export default function AdminDashboard() {
       return
     }
     
-    mockLoadGames(loadInput, activeFilter)
+  loadGamesFromAPI(loadInput, activeFilter)
   }
 
   const clearLoadInput = () => {
@@ -535,7 +570,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className="ml-3">
                   <p className="text-xs font-medium text-gray-600">Total Users</p>
-                  <p className="text-lg font-semibold text-gray-900">{users.length}</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {totalUsersLoading ? 'Loading...' : totalUsersError ? 'Error' : totalUsers !== null ? totalUsers : '--'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -550,7 +587,7 @@ export default function AdminDashboard() {
                  </div>
                  <div className="ml-3">
                    <p className="text-xs font-medium text-gray-600">VIP Packages Available</p>
-                   <p className="text-lg font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/{vipPackages.length}</p>
+                   <p className="text-lg font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/3</p>
                  </div>
                </div>
              </div>
@@ -564,7 +601,15 @@ export default function AdminDashboard() {
                  </div>
                  <div className="ml-3">
                    <p className="text-xs font-medium text-gray-600">Unread Notifications</p>
-                   <p className="text-lg font-semibold text-gray-900">{notifications.filter(n => !n.read).length}</p>
+                   <p className="text-lg font-semibold text-gray-900">
+                     {unreadCountLoading
+                       ? 'Loading...'
+                       : unreadCountError
+                         ? 'Error'
+                         : unreadCount !== null
+                           ? unreadCount
+                           : '--'}
+                   </p>
                  </div>
                </div>
              </div>
@@ -659,28 +704,55 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-600 mt-1">Click on a slip to view and edit games</p>
                 </div>
                 
-                {uploadedSlips.length === 0 ? (
+                {slipsLoading ? (
+                  <div className="px-6 py-8 text-center text-gray-500">Loading slips...</div>
+                ) : slipsError ? (
+                  <div className="px-6 py-8 text-center text-red-500">
+                    <strong>Error loading slips:</strong> {slipsError}
+                  </div>
+                ) : uploadedSlips.length === 0 ? (
                   <div className="px-6 py-8 text-center text-gray-500">
                     No slips uploaded yet. Load games and click "Upload" to create slips.
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-200">
-                    {uploadedSlips.map((slip) => (
-                      <div 
-                        key={slip.id} 
+                    {uploadedSlips.map((slip: any) => (
+                      <div
+                        key={slip.id || slip.booking?.id || slip.shareCode}
                         className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                          selectedSlip?.id === slip.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                          selectedSlip?.id === (slip.id || slip.booking?.id || slip.shareCode) ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                         }`}
-                        onClick={() => setSelectedSlip(selectedSlip?.id === slip.id ? null : slip)}
+                        onClick={() => setSelectedSlip(selectedSlip?.id === (slip.id || slip.booking?.id || slip.shareCode) ? null : slip)}
                       >
                         <div className="flex justify-between items-center">
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900">{slip.name}</h3>
+                            <h3 className="text-lg font-medium text-gray-900">
+                              {slip.category === 'free'
+                                ? 'Free Slip'
+                                : slip.category
+                                ? `${slip.category.toUpperCase()} Slip`
+                                : slip.shareCode}
+                            </h3>
                             <p className="text-sm text-gray-500 mt-1">
-                              {slip.games.length} games • Total Odds: {slip.totalOdds} • Price: {slip.price || 'N/A'} • {slip.createdAt}
-                            </p>
-               </div>
-                          <div className="flex items-center space-x-2">
+                                                                            {(slip.games?.length || slip.booking?.games?.length || 0)} games • 
+                                              Total Odds: {slip.totalOdds || slip.booking?.totalOdds || 'N/A'} • 
+                                              Price: {slip.price || slip.booking?.price || 'N/A'} • 
+                                              {(() => {
+                                                const rawDate = slip.createdAt || slip.booking?.createdAt || '';
+                                                if (!rawDate) return '';
+                                                const d = new Date(rawDate);
+                                                if (isNaN(d.getTime())) return rawDate;
+                                                return d.toLocaleString(undefined, {
+                                                  year: 'numeric',
+                                                  month: 'short',
+                                                  day: '2-digit',
+                                                  hour: '2-digit',
+                                                  minute: '2-digit',
+                                                  hour12: true,
+                                                });
+                                              })()}
+                                              </p>
+                          </div>    <div className="flex items-center space-x-2">
                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                               slip.status === 'updated'
                                 ? 'bg-green-100 text-green-800'
@@ -688,19 +760,26 @@ export default function AdminDashboard() {
                                   ? 'bg-gray-100 text-gray-800'
                                   : 'bg-blue-100 text-blue-800'
                             }`}>
-                              {slip.status}
+                              {slip.status || 'uploaded'}
                             </span>
-                            <svg 
+                            <button
+                              className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
+                              onClick={e => { e.stopPropagation(); uploadSlip(slip); }}
+                              disabled={slip.status === 'uploaded'}
+                            >
+                              {slip.status === 'uploaded' ? 'Uploaded' : 'Upload'}
+                            </button>
+                            <svg
                               className={`w-5 h-5 text-gray-400 transition-transform ${
-                                selectedSlip?.id === slip.id ? 'rotate-180' : ''
-                              }`} 
-                              fill="none" 
-                              stroke="currentColor" 
+                                selectedSlip?.id === (slip.id || slip.booking?.id || slip.shareCode) ? 'rotate-180' : ''
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
-            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -747,9 +826,11 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-4 flex-1">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                          <div className="text-sm font-medium text-gray-900">
-                            {game.homeTeam} vs {game.awayTeam}
-                          </div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {(game.home_team && game.away_team)
+                                  ? `${game.home_team} vs ${game.away_team}`
+                                  : 'vs'}
+                              </div>
                               {/* Result Status Indicator */}
                               {game.result && (
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -1180,27 +1261,33 @@ export default function AdminDashboard() {
                               <h4 className="text-sm font-semibold text-gray-800">Set VIP Package Price</h4>
                               <button onClick={() => setShowPricePanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
                             </div>
-                            <label className="block text-xs text-gray-600 mb-1">Price (GHS)</label>
-                            <input
-                              type="number"
-                              value={vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0))?.amount || ''}
-                              onChange={(e) => {
-                                const newPrice = e.target.value;
-                                const vipKey = activeFilter === 'vip1' ? 'vip1' : activeFilter === 'vip2' ? 'vip2' : activeFilter === 'vip3' ? 'vip3' : null;
-                                if (vipKey) {
-                                  setVipPackages(vipPackages.map(p => 
-                                    p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : 3) ? { 
-                                      ...p, 
-                                      amount: parseInt(newPrice) || 0, 
-                                      price: `GHS ${newPrice}` 
-                                    } : p
-                                  ));
-                                }
-                              }}
-                              placeholder="Enter price in GHS"
-                              className="w-full px-3 py-2 border rounded mb-3 text-sm"
-                            />
-                            <p className="text-[11px] text-gray-500 mt-2">Price will be set for {activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} package.</p>
+                            {activeFilter !== 'free' ? (
+                              <>
+                                <label className="block text-xs text-gray-600 mb-1">Price (GHS)</label>
+                                <input
+                                  type="number"
+                                  value={vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0))?.amount || ''}
+                                  onChange={(e) => {
+                                    const newPrice = e.target.value;
+                                    const vipKey = activeFilter === 'vip1' ? 'vip1' : activeFilter === 'vip2' ? 'vip2' : activeFilter === 'vip3' ? 'vip3' : null;
+                                    if (vipKey) {
+                                      setVipPackages(vipPackages.map(p => 
+                                        p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : 3) ? { 
+                                          ...p, 
+                                          amount: parseInt(newPrice) || 0, 
+                                          price: `GHS ${newPrice}` 
+                                        } : p
+                                      ));
+                                    }
+                                  }}
+                                  placeholder="Enter price in GHS"
+                                  className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                                />
+                                <p className="text-[11px] text-gray-500 mt-2">Price will be set for {activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} package.</p>
+                              </>
+                            ) : (
+                              <div className="text-xs text-gray-500 mb-3">No price for Free Predictions.</div>
+                            )}
                             <div className="flex justify-end mt-3">
                               <button 
                                 onClick={() => { 
@@ -1232,17 +1319,21 @@ export default function AdminDashboard() {
                               totalOdds: loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2),
                               createdAt: new Date().toLocaleString(),
                               status: 'uploaded',
-                              price: activeFilter === 'free' ? 'Free' : currentVipPackage?.price || 'GHS 0',
+                              price: activeFilter === 'free' ? '0' : String(currentVipPackage?.amount || 0),
                               amount: activeFilter === 'free' ? 0 : currentVipPackage?.amount || 0,
                               bookingCodes: {
                                 sporty: sportyCodeInput || loadedGames[0]?.bookingCode || '',
                                 msport: msportCodeInput || '',
                                 football: footballCodeInput || ''
-                              }
+                              },
+                              shareCode: sportyCodeInput || loadedGames[0]?.bookingCode || '',
+                              shareURL: '',
+                              deadline: loadedGames[0]?.date || new Date().toISOString().split('T')[0]
                             }
                             
-                            // Add slip to uploaded slips
-                            setUploadedSlips(prev => [...prev, newSlip])
+                            // Add slip to uploaded slips and upload to backend
+                            setUploadedSlips(prev => [...prev, newSlip]);
+                            if (typeof uploadSlip === 'function') uploadSlip(newSlip);
                             
                             // Add games to the main games list for users to see
                             const updatedGames = [...games, ...loadedGames]
@@ -1265,9 +1356,8 @@ export default function AdminDashboard() {
                               }))
                             }
                             
-                            const priceInfo = activeFilter === 'free' ? 'Free' : currentVipPackage?.price || 'GHS 0'
+                            const priceInfo = activeFilter === 'free' ? 'Free' : (currentVipPackage?.amount ? `GHS ${currentVipPackage.amount}` : 'GHS 0')
                             const bookingInfo = sportyCodeInput || msportCodeInput || footballCodeInput ? 'with booking codes' : 'without booking codes'
-                            alert(`Successfully uploaded ${loadedGames.length} games to ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} section!\n\nPrice: ${priceInfo}\nBooking Codes: ${bookingInfo}`)
                           }}
                           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
                         >
@@ -1336,20 +1426,59 @@ export default function AdminDashboard() {
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  {vipPackages.map((pkg) => (
                    <div key={pkg.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">{pkg.name}</h3>
-                     
-                     <button
-                       onClick={() => setVipPackages(vipPackages.map(p => 
-                         p.id === pkg.id ? { ...p, available: !p.available } : p
-                       ))}
-                       className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                         pkg.available
-                           ? 'bg-red-600 hover:bg-red-700 text-white'
-                           : 'bg-green-600 hover:bg-green-700 text-white'
-                       }`}
-                     >
-                       {pkg.available ? 'Sold Out' : 'Available'}
-                     </button>
+                     <h3 className="text-lg font-bold text-gray-900 mb-4">
+                       {pkg.name.replace(/^vip(\d)$/i, (_, n) => `VIP ${n}`)}
+                     </h3>
+                     <div className="mb-2">
+                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${pkg.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                         {pkg.available ? 'Available' : 'Sold Out'}
+                       </span>
+                     </div>
+                     {vipAvailabilityError[pkg.id] && (
+                       <div className="text-xs text-red-600 mb-2">{vipAvailabilityError[pkg.id]}</div>
+                     )}
+                     <div className="flex gap-2">
+                       <button
+                         disabled={vipAvailabilityLoading[pkg.id] || !pkg.available}
+                         onClick={async () => {
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: true }));
+                           setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: '' }));
+                           try {
+                             const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/mark-sold-out/${pkg.id}`, { method: 'POST' });
+                             if (!res.ok) throw new Error('Failed to mark as sold out');
+                             setVipPackages(vipPackages.map(p => p.id === pkg.id ? { ...p, available: false } : p));
+                           } catch (err: any) {
+                             setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: err?.message || 'Error' }));
+                           }
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: false }));
+                         }}
+                         className={`w-1/2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                           !pkg.available ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'
+                         }`}
+                       >
+                         {vipAvailabilityLoading[pkg.id] && pkg.available ? 'Processing...' : 'Mark as Sold Out'}
+                       </button>
+                       <button
+                         disabled={vipAvailabilityLoading[pkg.id] || pkg.available}
+                         onClick={async () => {
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: true }));
+                           setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: '' }));
+                           try {
+                             const res = await fetch(`https://bet-geniuz-db-abd5c184b697.herokuapp.com/games/update-availability/${pkg.id}`, { method: 'POST' });
+                             if (!res.ok) throw new Error('Failed to mark as available');
+                             setVipPackages(vipPackages.map(p => p.id === pkg.id ? { ...p, available: true } : p));
+                           } catch (err: any) {
+                             setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: err?.message || 'Error' }));
+                           }
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: false }));
+                         }}
+                         className={`w-1/2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                           pkg.available ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
+                         }`}
+                       >
+                         {vipAvailabilityLoading[pkg.id] && !pkg.available ? 'Processing...' : 'Mark as Available'}
+                       </button>
+                     </div>
                    </div>
                  ))}
                </div>
@@ -1418,7 +1547,16 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-bold">Notification Management</h2>
             </div>
             <div className="p-6 space-y-4">
-              {notifications.map((notification) => (
+              {notificationsLoading && (
+                <div className="text-center text-blue-600 font-medium py-8">Loading notifications...</div>
+              )}
+              {notificationsError && !notificationsLoading && (
+                <div className="text-center text-red-600 font-medium py-8">{notificationsError}</div>
+              )}
+              {!notificationsLoading && !notificationsError && notifications.length === 0 && (
+                <div className="text-center text-gray-500 py-8">No notifications found.</div>
+              )}
+              {!notificationsLoading && !notificationsError && notifications.map((notification) => (
                 <div 
                   key={notification.id} 
                   className={`p-4 rounded-lg border ${
@@ -1456,6 +1594,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => markNotificationRead(notification.id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs ml-4"
+                        disabled={notificationsLoading}
                       >
                         Mark Read
                       </button>
