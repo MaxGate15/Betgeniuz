@@ -69,7 +69,7 @@ export const PaymentModal = ({
   };
 
   const payWithPaystack = () => {
-    const targetEmail = email || userData?.email || window.prompt('Enter your email for payment receipt') || '';
+    const targetEmail = email || (userData as any)?.email || window.prompt('Enter your email for payment receipt') || '';
     if (!targetEmail) {
       alert('Email is required to proceed with payment.');
       onClose();
@@ -103,7 +103,7 @@ export const PaymentModal = ({
   useEffect(() => {
     if (!isOpen) return
 
-    const emailToUse = userData?.email || `user+${Date.now()}@betgeniuz.local`
+    const emailToUse = (userData as any)?.email || `user+${Date.now()}@betgeniuz.local`
 
     const handler = (window as any).PaystackPop?.setup({
       key: PAYSTACK_CONFIG.publicKey,
