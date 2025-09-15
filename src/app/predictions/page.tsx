@@ -19,16 +19,17 @@ export default function Predictions() {
   }, [isLoading, isLoggedIn])
   const [activeTab, setActiveTab] = useState('today')
   const [showBookingPopup, setShowBookingPopup] = useState(false)
-  const [vipResultsUpdated, setVipResultsUpdated] = useState({
-    vip1: false,
-    vip2: true,
-    vip3: true
-  })
-  const [vipSoldOut, setVipSoldOut] = useState({
-    vip1: false,
-    vip2: false,
-    vip3: false
-  })
+  // Fix type error by updating the type of vipResultsUpdated and vipSoldOut to Record<string, boolean>
+const [vipResultsUpdated, setVipResultsUpdated] = useState<Record<string, boolean>>({
+  vip1: false,
+  vip2: true,
+  vip3: true
+})
+const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
+  vip1: false,
+  vip2: false,
+  vip3: false
+})
   const [showSoldOutPopup, setShowSoldOutPopup] = useState(false)
   const [soldOutVipType, setSoldOutVipType] = useState('')
   const [showLocationModal, setShowLocationModal] = useState(false)
