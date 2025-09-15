@@ -1,0 +1,5 @@
+[33m0dfb0c6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Add functionality to update game statuses for bookings in AdminDashboard
+[33md29c4e3[m fix: Remove Admin Login link from footer in Home component
+[33m9e73b4f[m fix: Update API endpoints in AdminDashboard, Login, Home, and Predictions components to use the new base URL
+[33m060ff0a[m fix: Update type casting for userData in PaymentModal to ensure correct email retrieval
+[33m73d109b[m fix: Update userData type casting for initials and username in Navbar component

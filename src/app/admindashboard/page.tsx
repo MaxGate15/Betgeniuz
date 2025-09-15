@@ -16,6 +16,7 @@ export default function AdminDashboard() {
   const [unreadCount, setUnreadCount] = useState<number|null>(null);
   const [unreadCountLoading, setUnreadCountLoading] = useState(false);
   const [unreadCountError, setUnreadCountError] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
   const [vipPackages, setVipPackages] = useState<any[]>([]);
   const [vipLoading, setVipLoading] = useState(false);
   const [vipError, setVipError] = useState('');
+  const [priceInput, setPriceInput] = useState('');
 
   useEffect(() => {
     const fetchVipPackages = async () => {
@@ -196,9 +198,16 @@ export default function AdminDashboard() {
   }, []);
 
   const [filteredGames, setFilteredGames] = useState(games)
-  const [activeFilter, setActiveFilter] = useState('all')
   const [loadInput, setLoadInput] = useState('')
   const [loadedGames, setLoadedGames] = useState<any[]>([])
+
+  // Update price input when activeFilter changes
+  useEffect(() => {
+    if (activeFilter !== 'free') {
+      const currentPackage = vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0));
+      setPriceInput(currentPackage?.amount?.toString() || '');
+    }
+  }, [activeFilter, vipPackages]);
   const [isLoading, setIsLoading] = useState(false)
   const [gamesByCategory, setGamesByCategory] = useState({
     free: [] as any[],
@@ -1313,23 +1322,34 @@ export default function AdminDashboard() {
                                 <label className="block text-xs text-gray-600 mb-1">Price (GHS)</label>
                                 <input
                                   type="number"
-                                  value={vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0))?.amount || ''}
+                                  value={priceInput}
                                   onChange={(e) => {
-                                    const newPrice = e.target.value;
-                                    const vipKey = activeFilter === 'vip1' ? 'vip1' : activeFilter === 'vip2' ? 'vip2' : activeFilter === 'vip3' ? 'vip3' : null;
-                                    if (vipKey) {
-                                      setVipPackages(vipPackages.map(p => 
-                                        p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : 3) ? { 
-                                          ...p, 
-                                          amount: parseInt(newPrice) || 0, 
-                                          price: `GHS ${newPrice}` 
-                                        } : p
-                                      ));
-                                    }
+                                    setPriceInput(e.target.value);
                                   }}
                                   placeholder="Enter price in GHS"
                                   className="w-full px-3 py-2 border rounded mb-3 text-sm"
                                 />
+                                <button
+                                  onClick={() => {
+                                    const newPrice = priceInput;
+                                    const vipKey = activeFilter === 'vip1' ? 'vip1' : activeFilter === 'vip2' ? 'vip2' : activeFilter === 'vip3' ? 'vip3' : null;
+                                    if (vipKey && newPrice) {
+                                      setVipPackages(prevPackages => 
+                                        prevPackages.map(p => 
+                                          p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : 3) ? { 
+                                            ...p, 
+                                            amount: parseInt(newPrice) || 0, 
+                                            price: `GHS ${newPrice}` 
+                                          } : p
+                                        )
+                                      );
+                                      setPriceInput('');
+                                    }
+                                  }}
+                                  className="w-full bg-[#2e2e8f] text-white py-2 px-4 rounded text-sm hover:bg-[#1e1e5f] transition-colors"
+                                >
+                                  Update Price
+                                </button>
                                 <p className="text-[11px] text-gray-500 mt-2">Price will be set for {activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} package.</p>
                               </>
                             ) : (
