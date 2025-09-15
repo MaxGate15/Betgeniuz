@@ -171,7 +171,7 @@ export default function VIP() {
                 )}
           {isPurchased && (
                 <div className="space-y-2">
-              {vipData.matches.map((match) => (
+              {vipData.matches.map((match: any) => (
                 <div key={match.id} className="text-left">
                   <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
                   {renderMatchResult(match, vipType)}
@@ -223,7 +223,7 @@ export default function VIP() {
         {/* Show matches for VIP 2 and VIP 3 when results are updated */}
         {isResultsUpdated && vipType !== 'vip1' && (
           <div className="space-y-2">
-            {vipData.matches.map((match) => (
+            {vipData.matches.map((match: any) => (
               <div key={match.id} className="text-left">
                 <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
                 {renderMatchResult(match, vipType)}
