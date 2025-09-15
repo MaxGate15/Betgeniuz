@@ -1,3 +1,5 @@
+  // Update game statuses for a booking
+
 
   // Upload slip to API
 
@@ -514,6 +516,46 @@ export default function AdminDashboard() {
     
   loadGamesFromAPI(loadInput, activeFilter)
   }
+    const updateGamesStatus = async (bookingId: number | string, games: { game_id: number, status: string }[]) => {
+    try {
+      const res = await fetch(`https://api.betgeniuz.com/games/update-games-status/${bookingId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ games }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        alert('Failed to update game statuses.');
+        console.error('Update error:', errText);
+        return;
+      }
+      // Update local state for uploadedSlips and selectedSlip
+      setUploadedSlips(prev => prev.map(slip => {
+        if (slip.id !== bookingId) return slip;
+        return {
+          ...slip,
+          games: slip.games.map((g: any) => {
+            const found = games.find(upd => upd.game_id === g.id);
+            return found ? { ...g, result: found.status } : g;
+          })
+        };
+      }));
+      if (selectedSlip && selectedSlip.id === bookingId) {
+        setSelectedSlip((prev: any) => ({
+          ...prev,
+          games: prev.games.map((g: any) => {
+            const found = games.find(upd => upd.game_id === g.id);
+            return found ? { ...g, result: found.status } : g;
+          })
+        }));
+      }
+      // Optionally show a success notification
+      alert('Game statuses updated successfully!');
+    } catch (err) {
+      alert('Failed to update game statuses. See console for details.');
+      console.error('Update error:', err);
+    }
+  };
 
   const clearLoadInput = () => {
     setLoadInput('')
@@ -861,22 +903,21 @@ export default function AdminDashboard() {
                               {game.odds}
                             </div>
                           </div>
-                          
-                            <button
+                          <button
                             onClick={() => {
-                              // Toggle edit mode for this specific game
-                              const updatedSlips = uploadedSlips.map((s: any) => 
-                                s.id === selectedSlip.id 
+                              // Enable edit mode and set editResult for this game
+                              const updatedSlips = uploadedSlips.map((s: any) =>
+                                s.id === selectedSlip.id
                                   ? {
                                       ...s,
-                                      games: s.games.map((g: any) => 
-                                        g.id === game.id ? { ...g, isEditing: !g.isEditing } : g
+                                      games: s.games.map((g: any) =>
+                                        g.id === game.id ? { ...g, isEditing: true, editResult: g.result } : g
                                       )
                                     }
                                   : s
-                              )
-                              setUploadedSlips(updatedSlips)
-                              setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                              );
+                              setUploadedSlips(updatedSlips);
+                              setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
                             }}
                             className="bg-[#191970] hover:bg-[#2e2e8f] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
                           >
@@ -895,19 +936,22 @@ export default function AdminDashboard() {
                             <div className="flex items-center space-x-3">
                               {/* Correct Mark (Won) */}
                               <button
-                                onClick={() => {
-                                  const updatedSlips = uploadedSlips.map((s: any) => 
-                                    s.id === selectedSlip.id 
+                                onClick={async () => {
+                                  await updateGamesStatus(selectedSlip.id, [
+                                    { game_id: game.id, status: 'won' }
+                                  ]);
+                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                    s.id === selectedSlip.id
                                       ? {
                                           ...s,
-                                          games: s.games.map((g: any) => 
+                                          games: s.games.map((g: any) =>
                                             g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
                                           )
                                         }
                                       : s
-                                  )
-                                  setUploadedSlips(updatedSlips)
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                  );
+                                  setUploadedSlips(updatedSlips);
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
                                 }}
                                 className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
                               >
@@ -916,22 +960,24 @@ export default function AdminDashboard() {
                               </svg>
                                 <span className="text-sm font-medium">Won</span>
                             </button>
-                            
                               {/* Wrong Mark (Lost) */}
                             <button
-                                onClick={() => {
-                                  const updatedSlips = uploadedSlips.map((s: any) => 
-                                    s.id === selectedSlip.id 
+                                onClick={async () => {
+                                  await updateGamesStatus(selectedSlip.id, [
+                                    { game_id: game.id, status: 'lost' }
+                                  ]);
+                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                    s.id === selectedSlip.id
                                       ? {
                                           ...s,
-                                          games: s.games.map((g: any) => 
+                                          games: s.games.map((g: any) =>
                                             g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
                                           )
                                         }
                                       : s
-                                  )
-                                  setUploadedSlips(updatedSlips)
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                  );
+                                  setUploadedSlips(updatedSlips);
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
                                 }}
                                 className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
                               >
@@ -940,22 +986,24 @@ export default function AdminDashboard() {
                               </svg>
                                 <span className="text-sm font-medium">Lost</span>
                             </button>
-                            
                               {/* Question Mark (Pending) */}
                             <button
-                                onClick={() => {
-                                  const updatedSlips = uploadedSlips.map((s: any) => 
-                                    s.id === selectedSlip.id 
+                                onClick={async () => {
+                                  await updateGamesStatus(selectedSlip.id, [
+                                    { game_id: game.id, status: 'pending' }
+                                  ]);
+                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                    s.id === selectedSlip.id
                                       ? {
                                           ...s,
-                                          games: s.games.map((g: any) => 
+                                          games: s.games.map((g: any) =>
                                             g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
                                           )
                                         }
                                       : s
-                                  )
-                                  setUploadedSlips(updatedSlips)
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                  );
+                                  setUploadedSlips(updatedSlips);
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
                                 }}
                                 className="flex items-center space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
                               >
@@ -964,28 +1012,27 @@ export default function AdminDashboard() {
                               </svg>
                                 <span className="text-sm font-medium">Pending</span>
                               </button>
-                              
                               {/* Cancel Button */}
                               <button
                                 onClick={() => {
-                                  const updatedSlips = uploadedSlips.map((s: any) => 
-                                    s.id === selectedSlip.id 
+                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                    s.id === selectedSlip.id
                                       ? {
                                           ...s,
-                                          games: s.games.map((g: any) => 
+                                          games: s.games.map((g: any) =>
                                             g.id === game.id ? { ...g, isEditing: false } : g
                                           )
                                         }
                                       : s
-                                  )
-                                  setUploadedSlips(updatedSlips)
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id))
+                                  );
+                                  setUploadedSlips(updatedSlips);
+                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
                                 }}
                                 className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
                               >
                                 Cancel
                             </button>
-                          </div>
+                            </div>
                           </div>
                         </div>
                       )}
