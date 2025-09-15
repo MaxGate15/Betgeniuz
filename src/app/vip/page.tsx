@@ -7,7 +7,7 @@ import { LocationModal } from '@/components/LocationModal'
 import { NonGhanaPayment } from '@/components/NonGhanaPayment'
 import { VIP_PACKAGES } from '@/config/paystack'
 import { useAuth } from '@/hooks/useAuth'
-import { VIP_MATCHES_DATA } from '@/data/vipMatches'
+import { fetchVIPMatches, fetchVIPResultsUpdated, fetchVIPSoldOut } from '@/data/vipMatches'
 import { VIP_BOOKING_CODES } from '@/data/vipBookingCodes'
 import { VIP_RESULTS_UPDATED, VIP_SOLD_OUT, VIP_DATE_HEADER } from '@/data/vipStatus'
 
@@ -18,8 +18,12 @@ export default function VIP() {
       window.location.href = '/login'
     }
   }, [isLoading, isLoggedIn])
-  const [vipResultsUpdated, setVipResultsUpdated] = useState(VIP_RESULTS_UPDATED)
-  const [vipSoldOut, setVipSoldOut] = useState(VIP_SOLD_OUT)
+
+  // Loading state for async data
+  const [loading, setLoading] = useState(true)
+  const [VIP_MATCHES_DATA, setVIPMatchesData] = useState<any>({})
+  const [vipResultsUpdated, setVipResultsUpdated] = useState<any>({})
+  const [vipSoldOut, setVipSoldOut] = useState<any>({})
   const [showSoldOutPopup, setShowSoldOutPopup] = useState(false)
   const [soldOutVipType, setSoldOutVipType] = useState('')
   const [showLocationModal, setShowLocationModal] = useState(false)
@@ -34,6 +38,21 @@ export default function VIP() {
   const [adminBookingCodes, setAdminBookingCodes] = useState(VIP_BOOKING_CODES)
   
   useEffect(() => {
+    // Fetch VIP data from API
+    const fetchData = async () => {
+      setLoading(true)
+      const [matches, resultsUpdated, soldOut] = await Promise.all([
+        fetchVIPMatches(),
+        fetchVIPResultsUpdated(),
+        fetchVIPSoldOut()
+      ])
+      setVIPMatchesData(matches)
+      setVipResultsUpdated(resultsUpdated)
+      setVipSoldOut(soldOut)
+      setLoading(false)
+    }
+    fetchData()
+
     try {
       const saved = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
       if (Array.isArray(saved)) setPurchasedPackages(saved)
@@ -282,6 +301,14 @@ export default function VIP() {
                 />
               )}
             </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white text-gray-800">
+        <div className="text-xl font-semibold">Loading VIP Packages...</div>
+      </main>
     )
   }
 

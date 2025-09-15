@@ -5,7 +5,9 @@ import Navbar from '@/components/Navbar'
 import { PaymentModal } from '@/components/PaymentModal'
 import { LocationModal } from '@/components/LocationModal'
 import { NonGhanaPayment } from '@/components/NonGhanaPayment'
+import { fetchVIPMatches, fetchVIPResultsUpdated, fetchVIPSoldOut } from '@/data/vipMatches'
 import { VIP_PACKAGES } from '@/config/paystack'
+import { VIP_BOOKING_CODES } from '@/data/vipBookingCodes'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function Predictions() {
@@ -105,28 +107,69 @@ export default function Predictions() {
       fetchPredictions();
     }, [activeTab, selectedDate]);
 
-  const handleBuyNowClick = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
+  // VIP section state (copied from vip/page.tsx)
+  const [vipLoading, setVipLoading] = useState(true)
+  const [VIP_MATCHES_DATA, setVIPMatchesData] = useState<any>({})
+  const [adminVipPackages, setAdminVipPackages] = useState(VIP_PACKAGES)
+  const [adminBookingCodes, setAdminBookingCodes] = useState(VIP_BOOKING_CODES)
+
+  useEffect(() => {
+    // Fetch VIP data from API
+    const fetchData = async () => {
+      setVipLoading(true)
+      const [matches, resultsUpdated, soldOut] = await Promise.all([
+        fetchVIPMatches(),
+        fetchVIPResultsUpdated(),
+        fetchVIPSoldOut()
+      ])
+      setVIPMatchesData(matches)
+      setVipResultsUpdated(resultsUpdated)
+      setVipSoldOut(soldOut)
+      setVipLoading(false)
+    }
+    fetchData()
+
+    try {
+      const saved = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
+      if (Array.isArray(saved)) setPurchasedPackages(saved)
+
+      // Load admin-configured VIP packages
+      const adminPackages = localStorage.getItem('vipPackages')
+      if (adminPackages) {
+        setAdminVipPackages(JSON.parse(adminPackages))
+      }
+
+      // Load admin-configured booking codes
+      const adminCodes = localStorage.getItem('vipBookingCodes')
+      if (adminCodes) {
+        setAdminBookingCodes(JSON.parse(adminCodes))
+      }
+    } catch {}
+  }, [])
+
+  // VIP logic handlers (copied from vip/page.tsx)
+  const handleVipBuyNowClick = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
     if (!isLoggedIn) {
       window.location.href = '/login'
       return
     }
-    
+
     if (vipSoldOut[vipType]) {
       setSoldOutVipType(vipType)
       setShowSoldOutPopup(true)
     } else {
-      // Set up location modal first
-      setSelectedVipPackage(VIP_PACKAGES[vipType].name)
-      setSelectedVipAmount(VIP_PACKAGES[vipType].amount)
+      const vipPackage = adminVipPackages[vipType] || VIP_PACKAGES[vipType]
+      setSelectedVipPackage(vipPackage.name)
+      setSelectedVipAmount(vipPackage.amount)
       setActiveCardIndex(cardIndex)
       setShowLocationModal(true)
     }
   }
 
-  const handleLocationSelect = (location: 'ghana' | 'not-ghana') => {
+  const handleVipLocationSelect = (location: 'ghana' | 'not-ghana') => {
     setSelectedLocation(location)
     setShowLocationModal(false)
-    
+
     if (location === 'ghana') {
       setShowPaymentModal(true)
     } else {
@@ -134,11 +177,205 @@ export default function Predictions() {
     }
   }
 
-  const handlePaymentSuccess = (reference: string, packageName: string) => {
-    console.log(`Payment successful for ${packageName}. Reference: ${reference}`)
-    setPurchasedPackages(prev => [...prev, packageName])
-    // Here you would typically send the reference to your backend for verification
-    alert(`Payment successful! You now have access to ${packageName}. Reference: ${reference}`)
+  const handleVipPaymentSuccess = (reference: string) => {
+    try {
+      const prev = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
+      const next = Array.from(new Set([...(Array.isArray(prev) ? prev : []), selectedVipPackage]))
+      localStorage.setItem('purchasedPackages', JSON.stringify(next))
+    } catch {}
+
+    setShowPaymentModal(false)
+    setShowLocationModal(false)
+    setShowNonGhanaModal(false)
+    setActiveCardIndex(null)
+    window.location.href = '/dashboard?from=payment_success'
+  }
+
+  const renderVipMatchResult = (match: any, vipType: string) => {
+    if (!vipResultsUpdated[vipType as keyof typeof vipResultsUpdated]) return null
+
+    return (
+      <div className="flex items-center justify-between">
+        <div className="flex space-x-2">
+          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
+          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
+        </div>
+        <div className={`w-6 h-6 ${match.result === 'win' ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
+          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+            {match.result === 'win' ? (
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            ) : (
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            )}
+          </svg>
+        </div>
+      </div>
+    )
+  }
+
+  const renderVIPCard = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
+    const vipData = VIP_MATCHES_DATA[vipType]
+    if (!vipData) return null
+    const isPurchased = purchasedPackages.includes(vipData.name)
+    const isResultsUpdated = vipResultsUpdated[vipType]
+    const isSoldOut = vipSoldOut[vipType]
+    const bookingCodes = adminBookingCodes[vipType]
+
+    return (
+      <div className="relative text-center bg-gray-50 rounded-lg p-3">
+        {/* Date Header - Only show when results are updated */}
+        {isResultsUpdated && (
+          <div className="text-red-500 text-sm font-medium mb-4">
+            {/* You may want to add a date header here if available */}
+          </div>
+        )}
+
+        {/* Sample Matches - Locked until purchase */}
+        <div className="mb-2">
+          {!isPurchased && vipType === 'vip1' && (
+            <div className="bg-gray-200 text-gray-700 text-sm font-semibold py-3 px-4 rounded mb-4">
+              🔒 Locked — Purchase {vipData.name} to view games and booking codes
+            </div>
+          )}
+          {/* Sold Out Banner - Only show when sold out and results not updated */}
+          {isPurchased && isSoldOut && !isResultsUpdated && (
+            <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
+              SOLD OUT
+            </div>
+          )}
+          {isPurchased && (
+            <div className="space-y-2">
+              {vipData.matches.map((match: any) => (
+                <div key={match.id} className="text-left">
+                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
+                  {renderVipMatchResult(match, vipType)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {!isResultsUpdated && (
+          <div>
+            {isPurchased ? (
+              <div className="space-y-2">
+                <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                  ✓ Purchased — Booking Codes
+                </div>
+                <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Sporty:</span>
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
+                      {bookingCodes.sporty}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">MSport:</span>
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
+                      {bookingCodes.msport}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Football.com:</span>
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
+                      {bookingCodes.football}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
+                className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+              >
+                Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Show matches for VIP 2 and VIP 3 when results are updated */}
+        {isResultsUpdated && vipType !== 'vip1' && (
+          <div className="space-y-2">
+            {vipData.matches.map((match: any) => (
+              <div key={match.id} className="text-left">
+                <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
+                {renderVipMatchResult(match, vipType)}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Buy Now button for VIP 2 and VIP 3 when results are updated */}
+        {isResultsUpdated && !isPurchased && vipType !== 'vip1' && (
+          <button
+            onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
+            className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors mt-4"
+          >
+            Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+          </button>
+        )}
+
+        {/* Purchased status for VIP 2 and VIP 3 when results are updated */}
+        {isResultsUpdated && isPurchased && vipType !== 'vip1' && (
+          <div className="space-y-2 mt-4">
+            <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+              ✓ Purchased — Booking Codes
+            </div>
+            <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Sporty:</span>
+                <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
+                  {bookingCodes.sporty}
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">MSport:</span>
+                <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
+                  {bookingCodes.msport}
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Football.com:</span>
+                <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
+                  {bookingCodes.football}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modals for each VIP type */}
+        {showLocationModal && activeCardIndex === cardIndex && (
+          <LocationModal
+            isOpen={showLocationModal}
+            onClose={() => setShowLocationModal(false)}
+            onLocationSelect={handleVipLocationSelect}
+            vipPackage={selectedVipPackage}
+            amount={selectedVipAmount}
+          />
+        )}
+
+        {showPaymentModal && activeCardIndex === cardIndex && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            vipPackage={selectedVipPackage}
+            amount={selectedVipAmount}
+            onPaymentSuccess={handleVipPaymentSuccess}
+            location={selectedLocation || 'ghana'}
+          />
+        )}
+
+        {showNonGhanaModal && activeCardIndex === cardIndex && (
+          <NonGhanaPayment
+            vipPackage={selectedVipPackage}
+            amount={selectedVipAmount}
+            onClose={() => setShowNonGhanaModal(false)}
+          />
+        )}
+      </div>
+    )
   }
 
   return (
@@ -404,391 +641,57 @@ export default function Predictions() {
       {/* VIP Packages Section */}
       <section id="vip-packages" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 text-center mb-4">
-            Choose Your VIP Package
-          </h2>
-          <p className="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Unlock premium predictions and expert analysis with our exclusive VIP tiers
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-8 items-start">
-            {/* VIP 1 Card */}
-            <div className="relative text-center bg-gray-50 rounded-lg p-3">
-              {/* Date Header - Only show when results are updated */}
-              {vipResultsUpdated.vip1 && (
-                <div className="text-red-500 text-sm font-medium mb-4">
-                  08/01, 08:37 AM
-                </div>
-              )}
-              
-              {/* Sample Matches */}
-              <div className="mb-2">
-                {/* Sold Out Banner - Only show when sold out and results not updated */}
-                {vipSoldOut.vip1 && !vipResultsUpdated.vip1 && (
-                  <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
-                    SOLD OUT
-                  </div>
-                )}
-                <div className="space-y-2">
-                  {/* Match 1 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Arsenal vs Chelsea</div>
-                    {vipResultsUpdated.vip1 ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex space-x-2">
-                          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Home</div>
-                          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.23</div>
-                        </div>
-                        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                  
-                  {/* Match 2 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Manchester United vs Liverpool</div>
-                    {vipResultsUpdated.vip1 ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex space-x-2">
-                          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Over 2.5</div>
-                          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.62</div>
-                        </div>
-                        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                  
-                  {/* Match 3 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Barcelona vs Real Madrid</div>
-                    {vipResultsUpdated.vip1 ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex space-x-2">
-                          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Away</div>
-                          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.37</div>
-                        </div>
-                        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-              
-              {!vipResultsUpdated.vip1 && (
-                <div>
-                  {purchasedPackages.includes('VIP 1') ? (
-                    <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                      ✓ Purchased
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => handleBuyNowClick('vip1', 0)}
-                      className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
-                    >
-                      Buy Now 100gh
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Location Modal Overlay for VIP 1 */}
-              {showLocationModal && activeCardIndex === 0 && (
-                <LocationModal
-                  isOpen={showLocationModal}
-                  onClose={() => setShowLocationModal(false)}
-                  onLocationSelect={handleLocationSelect}
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                />
-              )}
-
-              {/* Payment Modal Overlay for VIP 1 */}
-              {showPaymentModal && activeCardIndex === 0 && (
-                <PaymentModal
-                  isOpen={showPaymentModal}
-                  onClose={() => setShowPaymentModal(false)}
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  location={selectedLocation || 'ghana'}
-                />
-              )}
-
-              {/* Non-Ghana Modal Overlay for VIP 1 */}
-              {showNonGhanaModal && activeCardIndex === 0 && (
-                <NonGhanaPayment
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                  onClose={() => setShowNonGhanaModal(false)}
-                />
-              )}
+          {vipLoading ? (
+            <div className="text-xl font-semibold text-gray-800 text-center py-8">Loading VIP Packages...</div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8 items-start">
+              {renderVIPCard('vip1', 0)}
+              {renderVIPCard('vip2', 1)}
+              {renderVIPCard('vip3', 2)}
             </div>
-
-            {/* VIP 2 Card */}
-            <div className="relative text-center bg-gray-50 rounded-lg p-3">
-              {/* Date Header - Results already updated */}
-              <div className="text-red-500 text-sm font-medium mb-4">
-                08/01, 08:37 AM
-              </div>
-              
-              {/* Sample Matches with Results */}
-              <div className="mb-2">
-                {/* Sold Out Banner - Only show when sold out and results not updated */}
-                {vipSoldOut.vip2 && !vipResultsUpdated.vip2 && (
-                  <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
-                    SOLD OUT
-                  </div>
-                )}
-                <div className="space-y-2">
-                  {/* Match 1 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">PSG vs Bayern Munich</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Over 1.5</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.21</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 2 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Inter Milan vs AC Milan</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Home</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.31</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 3 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Atletico Madrid vs Sevilla</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Over 1.5</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.38</div>
-                      </div>
-                      <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 4 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Juventus vs Napoli</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Away</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.24</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* No Buy Now button - Results already updated */}
-
-              {/* Location Modal Overlay for VIP 2 */}
-              {showLocationModal && activeCardIndex === 1 && (
-                <LocationModal
-                  isOpen={showLocationModal}
-                  onClose={() => setShowLocationModal(false)}
-                  onLocationSelect={handleLocationSelect}
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                />
-              )}
-
-              {/* Payment Modal Overlay for VIP 2 */}
-              {showPaymentModal && activeCardIndex === 1 && (
-                <PaymentModal
-                  isOpen={showPaymentModal}
-                  onClose={() => setShowPaymentModal(false)}
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  location={selectedLocation || 'ghana'}
-                />
-              )}
-
-              {/* Non-Ghana Modal Overlay for VIP 2 */}
-              {showNonGhanaModal && activeCardIndex === 1 && (
-                <NonGhanaPayment
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                  onClose={() => setShowNonGhanaModal(false)}
-                />
-              )}
-            </div>
-
-            {/* VIP 3 Card */}
-            <div className="relative text-center bg-gray-50 rounded-lg p-3">
-              {/* Date Header - Results already updated */}
-              <div className="text-red-500 text-sm font-medium mb-4">
-                08/01, 08:37 AM
-              </div>
-              
-              {/* Sample Matches with Results */}
-              <div className="mb-2">
-                {/* Sold Out Banner - Only show when sold out and results not updated */}
-                {vipSoldOut.vip3 && !vipResultsUpdated.vip3 && (
-                  <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
-                    SOLD OUT
-                  </div>
-                )}
-                <div className="space-y-2">
-                  {/* Match 1 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Manchester City vs Real Madrid</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Over 2.5</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.45</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 2 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Liverpool vs Barcelona</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Home</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.28</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 3 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">PSG vs Manchester United</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Over 1.5</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.19</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 4 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Bayern Munich vs Chelsea</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Away</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.33</div>
-                      </div>
-                      <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Match 5 */}
-                  <div className="text-left">
-                    <div className="text-sm text-gray-800 font-bold mb-2">Inter Milan vs Arsenal</div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: Over 1.5</div>
-                        <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: 1.26</div>
-                      </div>
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-            </div>
-              
-              {/* No Buy Now button - Results already updated */}
-
-              {/* Location Modal Overlay for VIP 3 */}
-              {showLocationModal && activeCardIndex === 2 && (
-                <LocationModal
-                  isOpen={showLocationModal}
-                  onClose={() => setShowLocationModal(false)}
-                  onLocationSelect={handleLocationSelect}
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                />
-              )}
-
-              {/* Payment Modal Overlay for VIP 3 */}
-              {showPaymentModal && activeCardIndex === 2 && (
-                <PaymentModal
-                  isOpen={showPaymentModal}
-                  onClose={() => setShowPaymentModal(false)}
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  location={selectedLocation || 'ghana'}
-                />
-              )}
-
-              {/* Non-Ghana Modal Overlay for VIP 3 */}
-              {showNonGhanaModal && activeCardIndex === 2 && (
-                <NonGhanaPayment
-                  vipPackage={selectedVipPackage}
-                  amount={selectedVipAmount}
-                  onClose={() => setShowNonGhanaModal(false)}
-                />
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
+      {/* Sold Out Popup */}
+      {showSoldOutPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg border-2 border-red-500 p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-red-600 uppercase text-center flex-1">Package Sold Out</h3>
+              <button
+                onClick={() => setShowSoldOutPopup(false)}
+                className="text-black hover:text-gray-600 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Package Sold Out</h3>
+              <p className="text-gray-600">
+                This VIP package is currently sold out. Please check back later or choose another package.
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowSoldOutPopup(false)
+                  document.querySelector('#vip-packages')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="flex-1 bg-[#f59e0b] hover:bg-[#d97706] text-white py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                View Other Packages
+              </button>
+              <button
+                onClick={() => setShowSoldOutPopup(false)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-[#191970] py-12 px-4">

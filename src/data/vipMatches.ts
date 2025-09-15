@@ -21,157 +21,63 @@ export interface VIPPackage {
   }
 }
 
-export const VIP_MATCHES_DATA: Record<string, VIPPackage> = {
-  vip1: {
-    id: 'vip1',
-    name: 'VIP 1',
-    price: 'GHS 100',
-    isResultsUpdated: false,
-    isSoldOut: false,
-    matches: [
-      {
-        id: 'vip1-match1',
-        homeTeam: 'Arsenal',
-        awayTeam: 'Chelsea',
-        option: 'Home',
-        odds: '1.23',
-        result: 'win'
-      },
-      {
-        id: 'vip1-match2',
-        homeTeam: 'Manchester United',
-        awayTeam: 'Liverpool',
-        option: 'Over 2.5',
-        odds: '1.62',
-        result: 'loss'
-      },
-      {
-        id: 'vip1-match3',
-        homeTeam: 'Barcelona',
-        awayTeam: 'Real Madrid',
-        option: 'Away',
-        odds: '1.37',
-        result: 'win'
+// Fetch and transform API data to VIPPackage structure
+const fetchVIPMatches = async (): Promise<Record<string, VIPPackage>> => {
+  const res = await fetch('https://api.betgeniuz.com/games/list-vip-slips')
+  const data = await res.json()
+  const result: Record<string, VIPPackage> = {}
+
+  data.forEach((item: any) => {
+    const cat = item.booking.category
+    result[cat] = {
+      id: cat,
+      name: cat.toUpperCase(),
+      price: `GHS ${item.booking.price}`,
+      isResultsUpdated: !!item.booking.updated,
+      isSoldOut: !!item.booking.sold_out,
+      matches: item.games.map((g: any) => ({
+        id: `${cat}-match${g.id}`,
+        homeTeam: g.home_team,
+        awayTeam: g.away_team,
+        option: g.prediction,
+        odds: g.odds.toString(),
+        result:
+          g.match_status === 'won'
+            ? 'win'
+            : g.match_status === 'lost'
+            ? 'loss'
+            : 'pending'
+      })),
+      bookingCodes: {
+        sporty: item.booking.share_code || '',
+        msport: item.booking.share_code || '',
+        football: item.booking.share_code || ''
       }
-    ],
-    bookingCodes: {
-      sporty: 'SP12345',
-      msport: 'MS12345',
-      football: 'FB12345'
     }
-  },
-  vip2: {
-    id: 'vip2',
-    name: 'VIP 2',
-    price: 'GHS 200',
-    isResultsUpdated: true,
-    isSoldOut: false,
-    matches: [
-      {
-        id: 'vip2-match1',
-        homeTeam: 'PSG',
-        awayTeam: 'Bayern Munich',
-        option: 'Over 1.5',
-        odds: '1.21',
-        result: 'win'
-      },
-      {
-        id: 'vip2-match2',
-        homeTeam: 'Inter Milan',
-        awayTeam: 'AC Milan',
-        option: 'Home',
-        odds: '1.45',
-        result: 'loss'
-      },
-      {
-        id: 'vip2-match3',
-        homeTeam: 'Atletico Madrid',
-        awayTeam: 'Sevilla',
-        option: 'Under 2.5',
-        odds: '1.78',
-        result: 'win'
-      },
-      {
-        id: 'vip2-match4',
-        homeTeam: 'Juventus',
-        awayTeam: 'Napoli',
-        option: 'Draw',
-        odds: '3.20',
-        result: 'loss'
-      }
-    ],
-    bookingCodes: {
-      sporty: 'SP22345',
-      msport: 'MS22345',
-      football: 'FB22345'
-    }
-  },
-  vip3: {
-    id: 'vip3',
-    name: 'VIP 3',
-    price: 'GHS 300',
-    isResultsUpdated: true,
-    isSoldOut: false,
-    matches: [
-      {
-        id: 'vip3-match1',
-        homeTeam: 'Manchester City',
-        awayTeam: 'Real Madrid',
-        option: 'Over 2.5',
-        odds: '1.85',
-        result: 'win'
-      },
-      {
-        id: 'vip3-match2',
-        homeTeam: 'Liverpool',
-        awayTeam: 'Barcelona',
-        option: 'Home',
-        odds: '1.92',
-        result: 'win'
-      },
-      {
-        id: 'vip3-match3',
-        homeTeam: 'PSG',
-        awayTeam: 'Manchester United',
-        option: 'Away',
-        odds: '2.15',
-        result: 'loss'
-      },
-      {
-        id: 'vip3-match4',
-        homeTeam: 'Bayern Munich',
-        awayTeam: 'Chelsea',
-        option: 'Over 3.5',
-        odds: '1.65',
-        result: 'win'
-      },
-      {
-        id: 'vip3-match5',
-        homeTeam: 'Inter Milan',
-        awayTeam: 'Arsenal',
-        option: 'Draw',
-        odds: '3.40',
-        result: 'loss'
-      }
-    ],
-    bookingCodes: {
-      sporty: 'SP32345',
-      msport: 'MS32345',
-      football: 'FB32345'
-    }
-  }
+  })
+
+  return result
 }
 
-export const VIP_RESULTS_UPDATED = {
-  vip1: false,
-  vip2: true,
-  vip3: true
+export { fetchVIPMatches }
+
+const fetchVIPResultsUpdated = async () => {
+  const vipMatches = await fetchVIPMatches()
+  return Object.fromEntries(
+    Object.entries(vipMatches).map(([k, v]) => [k, v.isResultsUpdated])
+  )
 }
 
-export const VIP_SOLD_OUT = {
-  vip1: false,
-  vip2: false,
-  vip3: false
+export { fetchVIPResultsUpdated }
+
+const fetchVIPSoldOut = async () => {
+  const vipMatches = await fetchVIPMatches()
+  return Object.fromEntries(
+    Object.entries(vipMatches).map(([k, v]) => [k, v.isSoldOut])
+  )
 }
 
-export const VIP_DATE_HEADER = '08/01, 08:37 AM'
+export { fetchVIPSoldOut }
+
+// VIP_DATE_HEADER is not available from API, so you may want to handle it elsewhere
+// VIP_DATE_HEADER is not available from API, so you may want to handle it elsewhere

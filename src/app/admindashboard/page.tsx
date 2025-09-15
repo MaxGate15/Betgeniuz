@@ -472,21 +472,36 @@ export default function AdminDashboard() {
         prediction: g.prediction,
         match_status: g.match_status || 'pending',
         match_day: g.match_day || slip.date || slip.deadline
-      }))
+      }));
+      // Determine the correct price to send
+      let priceToSend = '';
+      if (slip.price && slip.price !== '0') {
+        priceToSend = slip.price;
+      } else if (typeof priceInput !== 'undefined' && priceInput !== null && priceInput !== '' && priceInput !== '0') {
+        priceToSend = priceInput;
+      } else {
+        // Try to get from VIP package if possible
+        const currentVipPackage = vipPackages.find(p => p.id === (slip.category === 'vip1' ? 1 : slip.category === 'vip2' ? 2 : slip.category === 'vip3' ? 3 : 0));
+        if (currentVipPackage && currentVipPackage.amount) {
+          priceToSend = String(currentVipPackage.amount);
+        } else {
+          priceToSend = '0';
+        }
+      }
       const body = {
         shareCode: slip.shareCode,
         shareURL: slip.shareURL,
         deadline: slip.date || slip.deadline,
         category: slip.category,
-        price: slip.price || '',
+        price: priceToSend,
         games
-      }
-      console.log('Uploading slip:', body)
+      };
+      console.log('Uploading slip:', body);
       const res = await fetch('https://api.betgeniuz.com/games/upload-booking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
-      })
+      });
       if (!res.ok) {
         const errText = await res.text();
         let errorMsg = 'Failed to upload slip.';
