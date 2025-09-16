@@ -160,21 +160,21 @@ export default function VIP() {
     if (!vipResultsUpdated[vipType as keyof typeof vipResultsUpdated]) return null
 
   return (
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex space-x-2">
           <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
           <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
-        </div>
+                        </div>
         <div className={`w-6 h-6 ${match.result === 'win' ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
-          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
             {match.result === 'win' ? (
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             ) : (
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             )}
-          </svg>
-          </div>
-        </div>
+                          </svg>
+                        </div>
+                      </div>
     )
   }
 
@@ -186,7 +186,7 @@ export default function VIP() {
       return (
         <div className="relative text-center bg-gray-50 rounded-lg p-3">
           <div className="text-gray-500">Loading...</div>
-        </div>
+                  </div>
       )
     }
     
@@ -197,44 +197,24 @@ export default function VIP() {
 
     return (
             <div className="relative text-center bg-gray-50 rounded-lg p-3">
-              {/* Date Header - Only show when results are updated */}
-        {isResultsUpdated && (
-                <div className="text-red-500 text-sm font-medium mb-4">
-            {VIP_DATE_HEADER}
-                </div>
-              )}
               
         {/* VIP Package Name */}
         <div className="text-lg font-bold text-gray-800 mb-3">{vipData.name}</div>
         
-        {/* Matches Section */}
+        {/* Matches Section - Show only team names */}
         <div className="mb-4">
-          {!isPurchased ? (
-            <div className="space-y-2">
-              {/* Show only team names for locked matches */}
-              {vipData.matches.map((match: any) => (
-                <div key={match.id} className="text-left">
-                  <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
-                  </div>
-              ))}
-                  </div>
-          ) : (
-                <div className="space-y-2">
-              {/* Show full match details after purchase */}
-              {vipData.matches.map((match: any) => (
-                <div key={match.id} className="text-left">
-                  <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
-                  {renderMatchResult(match, vipType)}
+          <div className="space-y-2">
+            {vipData.matches.map((match: any) => (
+              <div key={match.id} className="text-left">
+                <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
                         </div>
-              ))}
-                </div>
-                )}
+            ))}
+                  </div>
               </div>
               
         {/* Action Section */}
-        {!isResultsUpdated && (
                 <div>
-            {isPurchased ? (
+          {isPurchased ? (
                     <div className="space-y-2">
                       <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
                         ✓ Purchased — Booking Codes
@@ -242,96 +222,33 @@ export default function VIP() {
                       <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Sporty:</span>
-                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
-                      {bookingCodes.sporty}
+                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
+                    {bookingCodes.sporty}
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">MSport:</span>
-                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
-                      {bookingCodes.msport}
+                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
+                    {bookingCodes.msport}
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Football.com:</span>
-                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
-                      {bookingCodes.football}
+                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
+                    {bookingCodes.football}
                           </button>
                         </div>
                       </div>
                     </div>
                   ) : (
                     <button 
-                onClick={() => handleBuyNowClick(vipType, cardIndex)}
+              onClick={() => handleBuyNowClick(vipType, cardIndex)}
                       className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                     >
-                Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+              Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
                     </button>
                   )}
                 </div>
-              )}
-
-        {/* Show matches for VIP 2 and VIP 3 when results are updated */}
-        {isResultsUpdated && vipType !== 'vip1' && (
-          <div className="space-y-2">
-            {!isPurchased ? (
-              // Show only team names for non-purchased VIP 2/3
-              vipData.matches.map((match: any) => (
-                <div key={match.id} className="text-left">
-                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
-                  <div className="text-xs text-gray-500">Prediction and odds hidden</div>
-                </div>
-              ))
-            ) : (
-              // Show full details for purchased VIP 2/3
-              vipData.matches.map((match: any) => (
-                <div key={match.id} className="text-left">
-                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
-                  {renderMatchResult(match, vipType)}
-                </div>
-              ))
-            )}
-                  </div>
-                )}
-
-        {/* Buy Now button for VIP 2 and VIP 3 when results are updated */}
-        {isResultsUpdated && !isPurchased && vipType !== 'vip1' && (
-                <button 
-            onClick={() => handleBuyNowClick(vipType, cardIndex)}
-            className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors mt-4"
-                >
-            Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
-                </button>
-              )}
-              
-        {/* Purchased status for VIP 2 and VIP 3 when results are updated */}
-        {isResultsUpdated && isPurchased && vipType !== 'vip1' && (
-          <div className="space-y-2 mt-4">
-                  <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                    ✓ Purchased — Booking Codes
-                  </div>
-                  <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Sporty:</span>
-                <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
-                  {bookingCodes.sporty}
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">MSport:</span>
-                <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
-                  {bookingCodes.msport}
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Football.com:</span>
-                <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
-                  {bookingCodes.football}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
         {/* Modals for each VIP type */}
         {showLocationModal && activeCardIndex === cardIndex && (
@@ -535,144 +452,6 @@ export default function VIP() {
       </footer>
     </main>
   )
-}
-
-                </a>
-
-              </div>
-
-            </div>
-
-
-
-            {/* Quick Links */}
-
-            <div>
-
-              <h4 className="font-semibold mb-4 text-white">Quick Links</h4>
-
-              <ul className="space-y-2 text-sm text-indigo-200">
-
-                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
-
-                <li><a href="/predictions" className="hover:text-white transition-colors">Predictions</a></li>
-
-                <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
-
-                <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
-
-              </ul>
-
-            </div>
-
-
-
-            {/* Support */}
-
-            <div>
-
-              <h4 className="font-semibold mb-4 text-white">Support</h4>
-
-              <ul className="space-y-2 text-sm text-indigo-200">
-
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
-
-              </ul>
-
-            </div>
-
-          </div>
-
-
-
-          {/* Bottom Section */}
-
-          <div className="border-t border-indigo-400 pt-6">
-
-            <div className="flex flex-col md:flex-row justify-between items-center">
-
-              {/* Features */}
-
-              <div className="flex flex-wrap gap-6 mb-4 md:mb-0">
-
-                <div className="flex items-center space-x-2">
-
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-
-                    </svg>
-
-                  </div>
-
-                  <span className="text-sm text-indigo-200">Verified Predictions</span>
-
-                </div>
-
-                <div className="flex items-center space-x-2">
-
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-
-                    </svg>
-
-                  </div>
-
-                  <span className="text-sm text-indigo-200">Expert Analysis</span>
-
-                </div>
-
-                <div className="flex items-center space-x-2">
-
-                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-
-                    </svg>
-
-                  </div>
-
-                  <span className="text-sm text-indigo-200">Gambling Awareness</span>
-
-                </div>
-
-              </div>
-
-
-
-              {/* Copyright */}
-
-              <div className="text-sm text-indigo-200">
-
-                <p>© 2024 BetGeniuz. All rights reserved. | <a href="#" className="hover:text-white transition-colors">Privacy Policy</a> | <a href="#" className="hover:text-white transition-colors">Terms of Service</a></p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </footer>
-
-    </main>
-
-  )
-
 }
 
 

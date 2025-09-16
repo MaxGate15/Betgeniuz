@@ -224,127 +224,57 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
 
     return (
       <div className="relative text-center bg-gray-50 rounded-lg p-3">
-        {/* Date Header - Only show when results are updated */}
-        {isResultsUpdated && (
-          <div className="text-red-500 text-sm font-medium mb-4">
-            {/* You may want to add a date header here if available */}
-          </div>
-        )}
-
-        {/* Sample Matches - Locked until purchase */}
-        <div className="mb-2">
-          {!isPurchased && vipType === 'vip1' && (
-            <div className="bg-gray-200 text-gray-700 text-sm font-semibold py-3 px-4 rounded mb-4">
-              🔒 Locked — Purchase {vipData.name} to view games and booking codes
-            </div>
-          )}
-          {/* Sold Out Banner - Only show when sold out and results not updated */}
-          {isPurchased && isSoldOut && !isResultsUpdated && (
-            <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
-              SOLD OUT
-            </div>
-          )}
-          {isPurchased && (
-            <div className="space-y-2">
-              {vipData.matches.map((match: any) => (
-                <div key={match.id} className="text-left">
-                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
-                  {renderVipMatchResult(match, vipType)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {!isResultsUpdated && (
-          <div>
-            {isPurchased ? (
-              <div className="space-y-2">
-                <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                  ✓ Purchased — Booking Codes
-                </div>
-                <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Sporty:</span>
-                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
-                      {bookingCodes.sporty}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">MSport:</span>
-                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
-                      {bookingCodes.msport}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Football.com:</span>
-                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
-                      {bookingCodes.football}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
-                className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
-              >
-                Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Show matches for VIP 2 and VIP 3 when results are updated */}
-        {isResultsUpdated && vipType !== 'vip1' && (
+        {/* VIP Package Name */}
+        <div className="text-lg font-bold text-gray-800 mb-3">{vipData.name}</div>
+        
+        {/* Matches Section - Show only team names */}
+        <div className="mb-4">
           <div className="space-y-2">
             {vipData.matches.map((match: any) => (
               <div key={match.id} className="text-left">
-                <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
-                {renderVipMatchResult(match, vipType)}
+                <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
               </div>
             ))}
           </div>
-        )}
-
-        {/* Buy Now button for VIP 2 and VIP 3 when results are updated */}
-        {isResultsUpdated && !isPurchased && vipType !== 'vip1' && (
-          <button
-            onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
-            className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors mt-4"
-          >
-            Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
-          </button>
-        )}
-
-        {/* Purchased status for VIP 2 and VIP 3 when results are updated */}
-        {isResultsUpdated && isPurchased && vipType !== 'vip1' && (
-          <div className="space-y-2 mt-4">
-            <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-              ✓ Purchased — Booking Codes
-            </div>
-            <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Sporty:</span>
-                <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
-                  {bookingCodes.sporty}
-                </button>
+        </div>
+              
+        {/* Action Section */}
+        <div>
+          {isPurchased ? (
+            <div className="space-y-2">
+              <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                ✓ Purchased — Booking Codes
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">MSport:</span>
-                <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
-                  {bookingCodes.msport}
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Football.com:</span>
-                <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
-                  {bookingCodes.football}
-                </button>
+              <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Sporty:</span>
+                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
+                    {bookingCodes.sporty}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">MSport:</span>
+                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
+                    {bookingCodes.msport}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Football.com:</span>
+                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
+                    {bookingCodes.football}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <button 
+              onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
+              className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+            >
+              Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+            </button>
+          )}
+        </div>
 
         {/* Modals for each VIP type */}
         {showLocationModal && activeCardIndex === cardIndex && (

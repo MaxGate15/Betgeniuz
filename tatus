@@ -3,3 +3,8 @@
 [33m9e73b4f[m fix: Update API endpoints in AdminDashboard, Login, Home, and Predictions components to use the new base URL
 [33m060ff0a[m fix: Update type casting for userData in PaymentModal to ensure correct email retrieval
 [33m73d109b[m fix: Update userData type casting for initials and username in Navbar component
+[33m3eaf55f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix admin dashboard slip dropdown - inline details, remove header, fix layout issues
+[33me0e60d5[m fix: replace Geist fonts with Inter/Roboto Mono to avoid Turbopack font module error
+[33m46fa44e[m fix(vip): remove stray JSX after component end causing parse error
+[33m1fb46e3[m Update VIP page display logic and admin dashboard slip functionality
+[33md62b00a[m fix: Add type annotations for match parameter in VIP matches mapping

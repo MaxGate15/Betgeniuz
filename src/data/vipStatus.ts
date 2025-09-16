@@ -6,8 +6,8 @@ export interface VIPStatus {
 
 export const VIP_RESULTS_UPDATED: VIPStatus = {
   vip1: false,
-  vip2: true,
-  vip3: true
+  vip2: false,
+  vip3: false
 }
 
 export const VIP_SOLD_OUT: VIPStatus = {
