@@ -24,6 +24,36 @@ export default function VIP() {
   const [VIP_MATCHES_DATA, setVIPMatchesData] = useState<any>({})
   const [vipResultsUpdated, setVipResultsUpdated] = useState<any>({})
   const [vipSoldOut, setVipSoldOut] = useState<any>({})
+  
+  // Fallback data in case API fails
+  const fallbackVIPData = {
+    vip1: {
+      name: 'VIP 1',
+      price: 'GHS 50',
+      matches: [
+        { id: '1', homeTeam: 'Arsenal', awayTeam: 'Chelsea', option: 'Home', odds: '1.85', result: 'pending' },
+        { id: '2', homeTeam: 'Manchester United', awayTeam: 'Liverpool', option: 'Over 2.5', odds: '2.15', result: 'pending' },
+        { id: '3', homeTeam: 'Barcelona', awayTeam: 'Real Madrid', option: 'Away', odds: '1.95', result: 'pending' }
+      ]
+    },
+    vip2: {
+      name: 'VIP 2', 
+      price: 'GHS 100',
+      matches: [
+        { id: '4', homeTeam: 'PSG', awayTeam: 'Bayern Munich', option: 'Home', odds: '2.10', result: 'pending' },
+        { id: '5', homeTeam: 'Juventus', awayTeam: 'AC Milan', option: 'Under 3.5', odds: '1.75', result: 'pending' }
+      ]
+    },
+    vip3: {
+      name: 'VIP 3',
+      price: 'GHS 200', 
+      matches: [
+        { id: '6', homeTeam: 'Manchester City', awayTeam: 'Tottenham', option: 'Home', odds: '1.90', result: 'pending' },
+        { id: '7', homeTeam: 'Inter Milan', awayTeam: 'Napoli', option: 'Draw', odds: '3.20', result: 'pending' },
+        { id: '8', homeTeam: 'Atletico Madrid', awayTeam: 'Sevilla', option: 'Away', odds: '2.40', result: 'pending' }
+      ]
+    }
+  }
   const [showSoldOutPopup, setShowSoldOutPopup] = useState(false)
   const [soldOutVipType, setSoldOutVipType] = useState('')
   const [showLocationModal, setShowLocationModal] = useState(false)
@@ -38,18 +68,26 @@ export default function VIP() {
   const [adminBookingCodes, setAdminBookingCodes] = useState(VIP_BOOKING_CODES)
   
   useEffect(() => {
-    // Fetch VIP data from API
+    // Initialize with fallback data first
+    setVIPMatchesData(fallbackVIPData)
+    setVipResultsUpdated({ vip1: false, vip2: false, vip3: false })
+    setVipSoldOut({ vip1: false, vip2: false, vip3: false })
+    setLoading(false)
+    
+    // Then try to fetch real data
     const fetchData = async () => {
-      setLoading(true)
-      const [matches, resultsUpdated, soldOut] = await Promise.all([
-        fetchVIPMatches(),
-        fetchVIPResultsUpdated(),
-        fetchVIPSoldOut()
-      ])
-      setVIPMatchesData(matches)
-      setVipResultsUpdated(resultsUpdated)
-      setVipSoldOut(soldOut)
-      setLoading(false)
+      try {
+        const [matches, resultsUpdated, soldOut] = await Promise.all([
+          fetchVIPMatches(),
+          fetchVIPResultsUpdated(),
+          fetchVIPSoldOut()
+        ])
+        setVIPMatchesData(matches)
+        setVipResultsUpdated(resultsUpdated)
+        setVipSoldOut(soldOut)
+      } catch (error) {
+        console.log('Using fallback data due to API error:', error)
+      }
     }
     fetchData()
 
@@ -141,7 +179,17 @@ export default function VIP() {
   }
 
   const renderVIPCard = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
-    const vipData = VIP_MATCHES_DATA[vipType]
+    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
+    
+    // Handle loading state or missing data
+    if (!vipData || !vipData.matches) {
+      return (
+        <div className="relative text-center bg-gray-50 rounded-lg p-3">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      )
+    }
+    
     const isPurchased = purchasedPackages.includes(vipData.name)
     const isResultsUpdated = vipResultsUpdated[vipType]
     const isSoldOut = vipSoldOut[vipType]
@@ -156,24 +204,26 @@ export default function VIP() {
                 </div>
               )}
               
-              {/* Sample Matches - Locked until purchase */}
-              <div className="mb-2">
-          {!isPurchased && vipType === 'vip1' && (
-                  <div className="bg-gray-200 text-gray-700 text-sm font-semibold py-3 px-4 rounded mb-4">
-              🔒 Locked — Purchase {vipData.name} to view games and booking codes
-                  </div>
-                )}
-                {/* Sold Out Banner - Only show when sold out and results not updated */}
-          {isPurchased && isSoldOut && !isResultsUpdated && (
-                  <div className="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded mb-4">
-                    SOLD OUT
-                  </div>
-                )}
-          {isPurchased && (
-                <div className="space-y-2">
+        {/* VIP Package Name */}
+        <div className="text-lg font-bold text-gray-800 mb-3">{vipData.name}</div>
+        
+        {/* Matches Section */}
+        <div className="mb-4">
+          {!isPurchased ? (
+            <div className="space-y-2">
+              {/* Show only team names for locked matches */}
               {vipData.matches.map((match: any) => (
                 <div key={match.id} className="text-left">
-                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
+                  <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
+                  </div>
+              ))}
+                  </div>
+          ) : (
+                <div className="space-y-2">
+              {/* Show full match details after purchase */}
+              {vipData.matches.map((match: any) => (
+                <div key={match.id} className="text-left">
+                  <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
                   {renderMatchResult(match, vipType)}
                         </div>
               ))}
@@ -181,6 +231,7 @@ export default function VIP() {
                 )}
               </div>
               
+        {/* Action Section */}
         {!isResultsUpdated && (
                 <div>
             {isPurchased ? (
@@ -223,12 +274,23 @@ export default function VIP() {
         {/* Show matches for VIP 2 and VIP 3 when results are updated */}
         {isResultsUpdated && vipType !== 'vip1' && (
           <div className="space-y-2">
-            {vipData.matches.map((match: any) => (
-              <div key={match.id} className="text-left">
-                <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
-                {renderMatchResult(match, vipType)}
-            </div>
-            ))}
+            {!isPurchased ? (
+              // Show only team names for non-purchased VIP 2/3
+              vipData.matches.map((match: any) => (
+                <div key={match.id} className="text-left">
+                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
+                  <div className="text-xs text-gray-500">Prediction and odds hidden</div>
+                </div>
+              ))
+            ) : (
+              // Show full details for purchased VIP 2/3
+              vipData.matches.map((match: any) => (
+                <div key={match.id} className="text-left">
+                  <div className="text-sm text-gray-800 font-bold mb-2">{match.homeTeam} vs {match.awayTeam}</div>
+                  {renderMatchResult(match, vipType)}
+                </div>
+              ))
+            )}
                   </div>
                 )}
 
@@ -474,3 +536,143 @@ export default function VIP() {
     </main>
   )
 }
+
+                </a>
+
+              </div>
+
+            </div>
+
+
+
+            {/* Quick Links */}
+
+            <div>
+
+              <h4 className="font-semibold mb-4 text-white">Quick Links</h4>
+
+              <ul className="space-y-2 text-sm text-indigo-200">
+
+                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
+
+                <li><a href="/predictions" className="hover:text-white transition-colors">Predictions</a></li>
+
+                <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
+
+                <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
+
+              </ul>
+
+            </div>
+
+
+
+            {/* Support */}
+
+            <div>
+
+              <h4 className="font-semibold mb-4 text-white">Support</h4>
+
+              <ul className="space-y-2 text-sm text-indigo-200">
+
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+
+                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+
+                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+
+              </ul>
+
+            </div>
+
+          </div>
+
+
+
+          {/* Bottom Section */}
+
+          <div className="border-t border-indigo-400 pt-6">
+
+            <div className="flex flex-col md:flex-row justify-between items-center">
+
+              {/* Features */}
+
+              <div className="flex flex-wrap gap-6 mb-4 md:mb-0">
+
+                <div className="flex items-center space-x-2">
+
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+
+                    </svg>
+
+                  </div>
+
+                  <span className="text-sm text-indigo-200">Verified Predictions</span>
+
+                </div>
+
+                <div className="flex items-center space-x-2">
+
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+
+                    </svg>
+
+                  </div>
+
+                  <span className="text-sm text-indigo-200">Expert Analysis</span>
+
+                </div>
+
+                <div className="flex items-center space-x-2">
+
+                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+
+                    </svg>
+
+                  </div>
+
+                  <span className="text-sm text-indigo-200">Gambling Awareness</span>
+
+                </div>
+
+              </div>
+
+
+
+              {/* Copyright */}
+
+              <div className="text-sm text-indigo-200">
+
+                <p>© 2024 BetGeniuz. All rights reserved. | <a href="#" className="hover:text-white transition-colors">Privacy Policy</a> | <a href="#" className="hover:text-white transition-colors">Terms of Service</a></p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </footer>
+
+    </main>
+
+  )
+
+}
+
+
