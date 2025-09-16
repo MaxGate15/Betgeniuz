@@ -1,3 +1,8 @@
+  // Update game statuses for a booking
+
+
+  // Upload slip to API
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -195,6 +200,14 @@ export default function AdminDashboard() {
   const [filteredGames, setFilteredGames] = useState(games)
   const [loadInput, setLoadInput] = useState('')
   const [loadedGames, setLoadedGames] = useState<any[]>([])
+
+  // Update price input when activeFilter changes
+  useEffect(() => {
+    if (activeFilter !== 'free') {
+      const currentPackage = vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0));
+      setPriceInput(currentPackage?.amount?.toString() || '');
+    }
+  }, [activeFilter, vipPackages]);
   const [isLoading, setIsLoading] = useState(false)
   const [gamesByCategory, setGamesByCategory] = useState({
     free: [] as any[],
@@ -221,14 +234,6 @@ export default function AdminDashboard() {
     vip2: { sporty: 'SP22345', msport: 'MS22345', football: 'FB22345' },
     vip3: { sporty: 'SP32345', msport: 'MS32345', football: 'FB32345' }
   })
-
-  // Update price input when activeFilter changes only
-  useEffect(() => {
-    if (activeFilter !== 'free') {
-      const currentPackage = vipPackages.find(p => p.id === (activeFilter === 'vip1' ? 1 : activeFilter === 'vip2' ? 2 : activeFilter === 'vip3' ? 3 : 0));
-      setPriceInput(currentPackage?.amount?.toString() || '');
-    }
-  }, [activeFilter]);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -777,152 +782,369 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-200">
-                    {uploadedSlips.map((slip: any) => (
-                      <div key={slip.id}>
-                      <div
-                        className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                            selectedSlip?.id === slip.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                        }`}
-                          onClick={() => setSelectedSlip(selectedSlip?.id === slip.id ? null : slip)}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {slip.category === 'free'
-                                ? 'Free Slip'
-                                : slip.category
-                                ? `${slip.category.toUpperCase()} Slip`
-                                : slip.shareCode}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                                                                            {(slip.games?.length || slip.booking?.games?.length || 0)} games • 
-                                              Total Odds: {slip.totalOdds || slip.booking?.totalOdds || 'N/A'} • 
-                                              Price: {slip.price || slip.booking?.price || 'N/A'} • 
-                                              {(() => {
-                                                const rawDate = slip.createdAt || slip.booking?.createdAt || '';
-                                                if (!rawDate) return '';
-                                                const d = new Date(rawDate);
-                                                if (isNaN(d.getTime())) return rawDate;
-                                                return d.toLocaleString(undefined, {
-                                                  year: 'numeric',
-                                                  month: 'short',
-                                                  day: '2-digit',
-                                                  hour: '2-digit',
-                                                  minute: '2-digit',
-                                                  hour12: true,
-                                                });
-                                              })()}
-                                              </p>
-                          </div>    <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              slip.status === 'updated'
-                                ? 'bg-green-100 text-green-800'
-                                : slip.status === 'uploaded'
-                                  ? 'bg-gray-100 text-gray-800'
-                                  : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {slip.status || 'uploaded'}
-                            </span>
-                            {slip.isEdited && (
-                              <button
-                                className="ml-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
-                                onClick={e => { e.stopPropagation(); /* Add update functionality here */ }}
-                              >
-                                Updated
-                              </button>
-                            )}
-                            <svg
-                              className={`w-5 h-5 text-gray-400 transition-transform ${
-                                selectedSlip?.id === slip.id ? 'rotate-180' : ''
-                              }`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                    {uploadedSlips.map((slip: any) => {
+                      const isSelected = selectedSlip?.id === (slip.id || slip.booking?.id || slip.shareCode);
+                      return (
+                        <div key={slip.id || slip.booking?.id || slip.shareCode}>
+                          {/* Slip Header */}
+                          <div
+                            className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                              isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                            }`}
+                            onClick={() => setSelectedSlip(isSelected ? null : slip)}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="text-lg font-medium text-gray-900">
+                                  {slip.category === 'free'
+                                    ? 'Free Slip'
+                                    : slip.category
+                                    ? `${slip.category.toUpperCase()} Slip`
+                                    : slip.shareCode}
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {(slip.games?.length || slip.booking?.games?.length || 0)} games • 
+                                  Total Odds: {slip.totalOdds || slip.booking?.totalOdds || 'N/A'} • 
+                                  Price: {slip.price || slip.booking?.price || 'N/A'} • 
+                                  {(() => {
+                                    const rawDate = slip.createdAt || slip.booking?.createdAt || '';
+                                    if (!rawDate) return '';
+                                    const d = new Date(rawDate);
+                                    if (isNaN(d.getTime())) return rawDate;
+                                    return d.toLocaleString(undefined, {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: true,
+                                    });
+                                  })()}
+                                </p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                  slip.status === 'updated'
+                                    ? 'bg-green-100 text-green-800'
+                                    : slip.status === 'uploaded'
+                                      ? 'bg-gray-100 text-gray-800'
+                                      : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {slip.status || 'uploaded'}
+                                </span>
+                                <button
+                                  className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
+                                  onClick={e => { e.stopPropagation(); uploadSlip(slip); }}
+                                  disabled={slip.status === 'uploaded'}
+                                >
+                                  {slip.status === 'uploaded' ? 'Uploaded' : 'Upload'}
+                                </button>
+                                <svg
+                                  className={`w-5 h-5 text-gray-400 transition-transform ${
+                                    isSelected ? 'rotate-180' : ''
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Slip Details - Show directly under the clicked slip */}
+                          {isSelected && (
+                            <div className="bg-gray-50 border-t border-gray-200">
+                              <div className="px-6 py-4">
+                                
+                                {/* Games in selected slip */}
+                                <div className="space-y-3">
+                                  {(slip.games || slip.booking?.games || []).map((game: any, index: number) => (
+                                    <div key={game.id || index} className="bg-white rounded-lg p-4 border border-gray-200">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-4 flex-1">
+                                          <div className="flex-1">
+                                            <div className="flex items-center space-x-2">
+                                              <div className="text-sm font-medium text-gray-900">
+                                                {(game.home_team && game.away_team)
+                                                  ? `${game.home_team} vs ${game.away_team}`
+                                                  : (game.home && game.away)
+                                                  ? `${game.home} vs ${game.away}`
+                                                  : 'vs'}
+                                              </div>
+                                              {/* Result Status Indicator */}
+                                              {game.result && (
+                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                  game.result === 'won' 
+                                                    ? 'bg-green-100 text-green-800' 
+                                                    : game.result === 'lost'
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                  {game.result === 'won' ? '✓' : 
+                                                   game.result === 'lost' ? '✗' : '?'}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                              {game.tournament || game.league || 'Tournament'}
+                                            </div>
+                                            <div className="text-xs text-gray-600 mt-1">
+                                              {game.prediction || game.pick || 'N/A'}
+                                            </div>
+                                          </div>
+                                          <div className="flex flex-col items-end min-w-[140px] mr-4">
+                                            <div className="flex flex-col items-end">
+                                              <span className="text-xs text-gray-500 font-medium mb-1">
+                                                Pick: {game.prediction || game.pick || 'N/A'}
+                                              </span>
+                                              <span className="text-xs text-gray-600">
+                                                Odds: <span className="font-semibold text-xs">{game.odd || game.odds || 'N/A'}</span>
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Edit Button */}
+                                        <div className="flex items-center">
+                                          <button
+                                            onClick={() => {
+                                              // Enable edit mode and set editResult for this game
+                                              const updatedSlips = uploadedSlips.map((s: any) =>
+                                                s.id === slip.id
+                                                  ? {
+                                                      ...s,
+                                                      games: s.games.map((g: any) =>
+                                                        g.id === game.id ? { ...g, isEditing: true, editResult: g.result } : g
+                                                      )
+                                                    }
+                                                  : s
+                                              );
+                                              setUploadedSlips(updatedSlips);
+                                              setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
+                                            }}
+                                            className="bg-[#191970] hover:bg-[#2e2e8f] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                                          >
+                                            Edit
+                                          </button>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Result Editing Section - Only show when editing */}
+                                      {game.isEditing && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                          <div className="flex items-center justify-between">
+                                            <div className="text-sm font-medium text-gray-700">
+                                              Update Result:
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                              {/* Correct Mark (Won) */}
+                                              <button
+                                                onClick={async () => {
+                                                  await updateGamesStatus(slip.id, [
+                                                    { game_id: game.id, status: 'won' }
+                                                  ]);
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
+                                                  setUploadedSlips(updatedSlips);
+                                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
+                                                }}
+                                                className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
+                                              >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                <span className="text-sm font-medium">Won</span>
+                                              </button>
+                                              {/* Wrong Mark (Lost) */}
+                                              <button
+                                                onClick={async () => {
+                                                  await updateGamesStatus(slip.id, [
+                                                    { game_id: game.id, status: 'lost' }
+                                                  ]);
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
+                                                  setUploadedSlips(updatedSlips);
+                                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
+                                                }}
+                                                className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
+                                              >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                <span className="text-sm font-medium">Lost</span>
+                                              </button>
+                                              {/* Question Mark (Pending) */}
+                                              <button
+                                                onClick={async () => {
+                                                  await updateGamesStatus(slip.id, [
+                                                    { game_id: game.id, status: 'pending' }
+                                                  ]);
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
+                                                  setUploadedSlips(updatedSlips);
+                                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
+                                                }}
+                                                className="flex items-center space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
+                                              >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span className="text-sm font-medium">Pending</span>
+                                              </button>
+                                              {/* Cancel Button */}
+                                              <button
+                                                onClick={() => {
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
+                                                  setUploadedSlips(updatedSlips);
+                                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
+                                                }}
+                                                className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
+                                              >
+                                                Cancel
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                        
-                        {/* Selected Slip Games Display - Show right under the clicked slip */}
-                        {selectedSlip?.id === slip.id && (
-                          <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden mx-6 mb-4">
-              <div className="px-6 py-4 border-b border-gray-200">
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+
+            {/* Loaded Games Results - SportyBet Betting Slip Format */}
+            {loadedGames.length > 0 && (
+              <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h2 className="text-xl font-bold">{selectedSlip.name}</h2>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {selectedSlip.games.length} games • Total Odds: {selectedSlip.totalOdds} • Price: {selectedSlip.price || 'N/A'}
-                      </p>
-                      {selectedSlip.bookingCodes && (selectedSlip.bookingCodes.sporty || selectedSlip.bookingCodes.msport || selectedSlip.bookingCodes.football) && (
-                        <div className="mt-2 text-xs text-gray-500">
-                          <span className="font-medium">Booking Codes:</span>
-                          {selectedSlip.bookingCodes.sporty && <span className="ml-2">SportyBet: {selectedSlip.bookingCodes.sporty}</span>}
-                          {selectedSlip.bookingCodes.msport && <span className="ml-2">MSport: {selectedSlip.bookingCodes.msport}</span>}
-                          {selectedSlip.bookingCodes.football && <span className="ml-2">Football.com: {selectedSlip.bookingCodes.football}</span>}
-                        </div>
-                      )}
-              </div>
+                      <h2 className="text-xl font-bold">Loaded Games from SportyBet</h2>
+                      <p className="text-sm text-gray-600 mt-1">Booking Code: {loadedGames[0]?.bookingCode}</p>
+                    </div>
                     <button
-                      onClick={() => setSelectedSlip(null)}
-                      className="text-gray-400 hover:text-gray-600"
+                      onClick={() => {
+                        setLoadedGames([])
+                        setLoadInput('')
+                        // Clear games from the current category
+                        if (activeFilter !== 'all') {
+                          setGamesByCategory(prev => ({
+                            ...prev,
+                            [activeFilter]: []
+                          }))
+                        }
+                      }}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      Clear All
                     </button>
                   </div>
                 </div>
                 
-                {/* Games in selected slip */}
+                {/* Betting Slip Format */}
                 <div className="divide-y divide-gray-200">
-                  {selectedSlip.games.map((game: any, index: number) => (
+                  {loadedGames.map((game: any, index: number) => (
                     <div key={game.id}>
                       <div className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
                         <div className="flex items-center space-x-4 flex-1">
+                          {/* Remove Button */}
+                          <button
+                            onClick={() => setLoadedGames(loadedGames.filter((g: any) => g.id !== game.id))}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          
+                          {/* Match Info */}
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                                          <span className="text-sm font-medium text-gray-900">
-                                            {game.home_team} vs {game.away_team}
-                          </span>
-                            </div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {game.homeTeam} vs {game.awayTeam}
+                              </div>
+                              {/* Result Status Indicator */}
+                              {game.result && (
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              game.result === 'won' 
+                                ? 'bg-green-100 text-green-800' 
+                                : game.result === 'lost'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                                  {game.result === 'won' ? '✓' : 
+                                   game.result === 'lost' ? '✗' : '?'}
+                            </span>
+                              )}
+                          </div>
                             <div className="text-xs text-gray-500 mt-1">
                               {game.league} • {game.date}
                             </div>
-                                        <div className="text-sm text-gray-700 mt-1">
+                            <div className="text-xs text-gray-600 mt-1">
                               {game.prediction}
                             </div>
                           </div>
-                                      <div className="flex items-center space-x-2">
-                                        <span className="text-sm font-medium text-gray-900">
+                        </div>
+                        
+                        {/* Odds and Actions */}
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <div className="text-sm font-medium text-gray-900">
                               {game.odds}
-                                        </span>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                          game.result === 'won' ? 'bg-green-100 text-green-800' :
-                                          game.result === 'lost' ? 'bg-red-100 text-red-800' :
-                                          'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                          {game.result}
-                                        </span>
                             </div>
                           </div>
-                                    <div className="flex items-center space-x-2">
+                          
                           <button
                             onClick={() => {
-                              // Enable edit mode and set editResult for this game
-                              const updatedSlips = uploadedSlips.map((s: any) =>
-                                s.id === selectedSlip.id
-                                  ? {
-                                      ...s,
-                                      games: s.games.map((g: any) =>
-                                        g.id === game.id ? { ...g, isEditing: true, editResult: g.result } : g
-                                      )
-                                    }
-                                  : s
-                              );
-                              setUploadedSlips(updatedSlips);
-                              setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
+                              // Toggle edit mode for this specific game
+                              const updatedLoadedGames = loadedGames.map((g: any) => 
+                                g.id === game.id ? { ...g, isEditing: !g.isEditing } : g
+                              )
+                              setLoadedGames(updatedLoadedGames)
                             }}
                             className="bg-[#191970] hover:bg-[#2e2e8f] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
                           >
@@ -934,328 +1156,203 @@ export default function AdminDashboard() {
                       {/* Result Editing Section - Only show when editing */}
                       {game.isEditing && (
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                                      <div className="flex items-center space-x-4">
-                                        <span className="text-sm font-medium text-gray-700">Set Result:</span>
-                                        <div className="flex space-x-2">
-                                          {/* Check Mark (Won) */}
-                              <button
-                                onClick={async () => {
-                                  await updateGamesStatus(selectedSlip.id, [
-                                    { game_id: game.id, status: 'won' }
-                                  ]);
-                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                    s.id === selectedSlip.id
-                                      ? {
-                                          ...s,
-                                          isEdited: true,
-                                          games: s.games.map((g: any) =>
-                                            g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
-                                          )
-                                        }
-                                      : s
-                                  );
-                                  setUploadedSlips(updatedSlips);
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-700">
+                              Update Result:
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {/* Correct Mark (Won) */}
+                          <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
                                 }}
                                 className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                                 <span className="text-sm font-medium">Won</span>
-                            </button>
+                          </button>
+                              
                               {/* Wrong Mark (Lost) */}
-                            <button
-                                onClick={async () => {
-                                  await updateGamesStatus(selectedSlip.id, [
-                                    { game_id: game.id, status: 'lost' }
-                                  ]);
-                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                    s.id === selectedSlip.id
-                                      ? {
-                                          ...s,
-                                          isEdited: true,
-                                          games: s.games.map((g: any) =>
-                                            g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
-                                          )
-                                        }
-                                      : s
-                                  );
-                                  setUploadedSlips(updatedSlips);
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
+                              <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
                                 }}
                                 className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                                 <span className="text-sm font-medium">Lost</span>
-                            </button>
+                              </button>
+                              
                               {/* Question Mark (Pending) */}
-                            <button
-                                onClick={async () => {
-                                  await updateGamesStatus(selectedSlip.id, [
-                                    { game_id: game.id, status: 'pending' }
-                                  ]);
-                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                    s.id === selectedSlip.id
-                                      ? {
-                                          ...s,
-                                          isEdited: true,
-                                          games: s.games.map((g: any) =>
-                                            g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
-                                          )
-                                        }
-                                      : s
-                                  );
-                                  setUploadedSlips(updatedSlips);
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
+                              <button
+                                onClick={() => {
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
                                 }}
                                 className="flex items-center space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                                 <span className="text-sm font-medium">Pending</span>
                               </button>
+                              
                               {/* Cancel Button */}
                               <button
                                 onClick={() => {
-                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                    s.id === selectedSlip.id
-                                      ? {
-                                          ...s,
-                                          games: s.games.map((g: any) =>
-                                            g.id === game.id ? { ...g, isEditing: false } : g
-                                          )
-                                        }
-                                      : s
-                                  );
-                                  setUploadedSlips(updatedSlips);
-                                  setSelectedSlip(updatedSlips.find((s: any) => s.id === selectedSlip.id));
+                                  const updatedLoadedGames = loadedGames.map((g: any) => 
+                                    g.id === game.id ? { ...g, isEditing: false } : g
+                                  )
+                                  setLoadedGames(updatedLoadedGames)
                                 }}
-                                            className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg transition-colors"
+                                className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium transition-colors"
                               >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                          </svg>
-                                            <span className="text-sm font-medium">Cancel</span>
-                            </button>
+                                Cancel
+                              </button>
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
                   ))}
-                </div>
               </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-            )}
-
-                    </div>
-        )}
-
-        {/* Load Games Section - Only show when category is selected and no games are loaded */}
-        {activeFilter !== 'all' && loadedGames.length === 0 && (
-          <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Load Games - {activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}</h2>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder={`Enter SportyBet booking code for ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}...`}
-                  value={loadInput}
-                  onChange={(e) => setLoadInput(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-green-500 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
-                />
-                {loadInput && (
-                <button
-                        onClick={clearLoadInput}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                 >
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                   </svg>
-                </button>
-                )}
-              </div>
-              <button
-                onClick={handleLoadGames}
-                disabled={isLoading}
-                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  isLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-                }`}
-              >
-                {isLoading ? 'Loading...' : 'Load Games'}
-              </button>
-                </div>
-            {isLoading && (
-              <div className="mt-4 text-center text-gray-600">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-                <p className="mt-2">Loading games from SportyBet...</p>
-              </div>
-            )}
-            </div>
-            )}
-
-        {/* Games Display - Show when games are loaded */}
-        {activeFilter !== 'all' && loadedGames.length > 0 && (
-              <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-xl font-bold">Loaded Games from SportyBet</h2>
-                  <p className="text-sm text-gray-600 mt-1">Booking Code: {sportyCodeInput || loadedGames[0]?.bookingCode || 'N/A'}</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                    setLoadedGames([]);
-                    setLoadInput('');
-                    setSportyCodeInput('');
-                    setMsportCodeInput('');
-                    setFootballCodeInput('');
-                    setIsBookingAttached(false);
-                    setShowCodePanel(false);
-                    setShowPricePanel(false);
-                  }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                </div>
                 
-                <div className="divide-y divide-gray-200">
-                  {loadedGames.map((game: any, index: number) => (
-                <div key={game.id || index} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
-                        <div className="flex items-center space-x-4 flex-1">
-                    {/* X icon for removing individual games */}
-                          <button
-                      onClick={() => {
-                        const updatedGames = loadedGames.filter((_, i) => i !== index);
-                        setLoadedGames(updatedGames);
-                      }}
-                      className="text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                          
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-900">
-                                {game.homeTeam} vs {game.awayTeam}
-                            </span>
-                        {/* Question mark icon */}
-                        <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                        </svg>
-                          </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {game.league} • {game.date}
-                            </div>
-                      <div className="text-sm text-gray-700 mt-1">
-                              {game.prediction}
-                            </div>
-                          </div>
-                        </div>
-                        
-                  {/* Odds and Edit button on the right */}
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-900">
-                              {game.odds}
-                    </span>
-                    <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
-                            Edit
-                          </button>
-                        </div>
-                      </div>
-              ))}
-                            </div>
-                      
-
-
-            <div className="px-6 py-4 border-t border-gray-200 relative">
-              <div className="flex justify-between items-end">
+                {/* Footer with total info and upload button */}
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                  <div className="flex justify-between items-start">
                     <div className="text-sm text-gray-600">
-                  {loadedGames.length} selections loaded
+                      {loadedGames.length} selection{loadedGames.length !== 1 ? 's' : ''} loaded
             </div>
-                
-                <div className="flex flex-col items-end space-y-2">
-                  <div className="text-sm font-medium text-gray-800">
+                    <div className="flex flex-col items-end">
+                      <div className="text-sm font-medium text-gray-900">
                         Total Odds: {loadedGames.reduce((acc: number, game: any) => acc * parseFloat(game.odds), 1).toFixed(2)}
                       </div>
-                  
+                      {/* Booking Codes small button + panel */}
+                      <div className="relative mt-2">
                         <button
                           onClick={() => setShowCodePanel(!showCodePanel)}
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
                         >
-                    Add Booking
+                          {showCodePanel ? 'Hide' : 'Add Booking'}
                         </button>
-                  
-                  {/* Set Price Panel - Absolute positioned overlay between Add Booking and Set Price */}
+                        {showCodePanel && (
+                          <div className="fixed bottom-24 right-8 w-80 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 z-50 text-left">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-gray-800">Attach Booking</h4>
+                              <button onClick={() => setShowCodePanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                            </div>
+                            <label className="block text-xs text-gray-600 mb-1">SportyBet Code</label>
+                            <input
+                              type="text"
+                              value={sportyCodeInput}
+                              onChange={(e) => setSportyCodeInput(e.target.value)}
+                              placeholder="e.g. abcd"
+                              className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                            />
+                            <label className="block text-xs text-gray-600 mb-1">MSport Code</label>
+                            <input
+                              type="text"
+                              value={msportCodeInput}
+                              onChange={(e) => setMsportCodeInput(e.target.value)}
+                              placeholder="e.g. efgh"
+                              className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                            />
+                            <label className="block text-xs text-gray-600 mb-1">Football.com Code</label>
+                            <input
+                              type="text"
+                              value={footballCodeInput}
+                              onChange={(e) => setFootballCodeInput(e.target.value)}
+                              placeholder="e.g. ijkl"
+                              className="w-full px-3 py-2 border rounded text-sm"
+                            />
+                            <p className="text-[11px] text-gray-500 mt-2">Codes will be attached to this {activeFilter === 'free' ? 'Free' : activeFilter.toUpperCase()} slip on upload.</p>
+                            <div className="flex justify-end mt-3">
+                              <button onClick={() => { setIsBookingAttached(true); setShowCodePanel(false) }} className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">Attach</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Price Setting Section */}
+                      <div className="relative mt-2">
+                        <button
+                          onClick={() => setShowPricePanel(!showPricePanel)}
+                          className="text-xs bg-[#f59e0b] hover:bg-[#d97706] text-white px-3 py-1 rounded"
+                        >
+                          {showPricePanel ? 'Hide' : 'Set Price'}
+                        </button>
                         {showPricePanel && (
-                    <div className="absolute bottom-0 right-0 mb-20 bg-white p-3 rounded-lg border shadow-lg w-64 z-10">
-                      <div className="flex flex-col space-y-2">
+                          <div className="fixed bottom-24 right-8 w-80 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 z-50 text-left">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-gray-800">Set VIP Package Price</h4>
+                              <button onClick={() => setShowPricePanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                            </div>
                             {activeFilter !== 'free' ? (
                               <>
-                            <div>
                                 <label className="block text-xs text-gray-600 mb-1">Price (GHS)</label>
                                 <input
                                   type="number"
-                                value={priceInput}
+                                  value={priceInput}
                                   onChange={(e) => {
-                                  setPriceInput(e.target.value);
-                                }}
-                                placeholder="Enter price in GHS"
-                                className="w-full px-2 py-1 border rounded text-xs"
-                              />
-                            </div>
-                            <button
-                              onClick={() => {
-                                const newPrice = priceInput;
+                                    setPriceInput(e.target.value);
+                                  }}
+                                  placeholder="Enter price in GHS"
+                                  className="w-full px-3 py-2 border rounded mb-3 text-sm"
+                                />
+                                <button
+                                  onClick={() => {
+                                    const newPrice = priceInput;
                                     const vipKey = activeFilter === 'vip1' ? 'vip1' : activeFilter === 'vip2' ? 'vip2' : activeFilter === 'vip3' ? 'vip3' : null;
-                                if (vipKey && newPrice) {
-                                  setVipPackages(prevPackages => 
-                                    prevPackages.map(p => 
-                                      p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : vipKey === 'vip3' ? 3 : 0) ? { 
-                                          ...p, 
-                                          amount: parseInt(newPrice) || 0, 
-                                          price: `GHS ${newPrice}` 
-                                        } : p
-                                    )
-                                  );
-                                  setShowPricePanel(false);
-                                }
-                              }}
-                              className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-xs font-medium transition-colors"
-                            >
-                              Save
-                            </button>
-                            <p className="text-[10px] text-gray-500">Price will be set for {activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} package.</p>
+                                    if (vipKey && newPrice) {
+                                      setVipPackages(prevPackages => 
+                                        prevPackages.map(p => 
+                                          p.id === (vipKey === 'vip1' ? 1 : vipKey === 'vip2' ? 2 : 3) ? { 
+                                            ...p, 
+                                            amount: parseInt(newPrice) || 0, 
+                                            price: `GHS ${newPrice}` 
+                                          } : p
+                                        )
+                                      );
+                                      setPriceInput('');
+                                    }
+                                  }}
+                                  className="w-full bg-[#2e2e8f] text-white py-2 px-4 rounded text-sm hover:bg-[#1e1e5f] transition-colors"
+                                >
+                                  Update Price
+                                </button>
+                                <p className="text-[11px] text-gray-500 mt-2">Price will be set for {activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'} package.</p>
                               </>
                             ) : (
-                          <div className="text-xs text-gray-500">No price for Free Predictions.</div>
-                        )}
+                              <div className="text-xs text-gray-500 mb-3">No price for Free Predictions.</div>
+                            )}
+                            <div className="flex justify-end mt-3">
+                              <button 
+                                onClick={() => { 
+                                  localStorage.setItem('vipPackages', JSON.stringify(vipPackages));
+                                  setShowPricePanel(false);
+                                  alert(`Price updated for ${activeFilter.toUpperCase()}!`);
+                                }} 
+                                className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                              >
+                                Save Price
+                              </button>
                             </div>
                           </div>
                         )}
-                  
-                  <button
-                    onClick={() => setShowPricePanel(!showPricePanel)}
-                    className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-xs font-medium transition-colors"
-                  >
-                    {showPricePanel ? 'Hide' : 'Set'} Price
-                  </button>
-                  
+                      </div>
+                      
+                      <div className="mt-2">
                         <button
                           onClick={() => {
                             // Get current price for the VIP package
@@ -1277,107 +1374,354 @@ export default function AdminDashboard() {
                                 msport: msportCodeInput || '',
                                 football: footballCodeInput || ''
                               },
-                        shareCode: sportyCodeInput || loadedGames[0]?.shareCode || '',
-                        shareURL: loadedGames[0]?.shareURL || '',
-                        deadline: loadedGames[0]?.date || ''
-                      };
-                      
+                              shareCode: sportyCodeInput || loadedGames[0]?.bookingCode || '',
+                              shareURL: '',
+                              deadline: loadedGames[0]?.date || new Date().toISOString().split('T')[0]
+                            }
+                            
+                            // Add slip to uploaded slips and upload to backend
                             setUploadedSlips(prev => [...prev, newSlip]);
-                      uploadSlip(newSlip);
-                    }}
-                    className="px-4 py-2 bg-[#191970] hover:bg-[#2e2e8f] text-white rounded text-sm font-medium transition-colors"
+                            if (typeof uploadSlip === 'function') uploadSlip(newSlip);
+                            
+                            // Add games to the main games list for users to see
+                            const updatedGames = [...games, ...loadedGames]
+                            setGames(updatedGames)
+                            setFilteredGames(updatedGames)
+                            
+                            // Clear loaded games and show success message
+                            setLoadedGames([])
+                            setLoadInput('')
+                            setSportyCodeInput('')
+                            setMsportCodeInput('')
+                            setIsBookingAttached(false)
+                            setShowCodePanel(false)
+                            
+                            // Clear from category storage
+                            if (activeFilter !== 'all') {
+                              setGamesByCategory(prev => ({
+                                ...prev,
+                                [activeFilter]: []
+                              }))
+                            }
+                            
+                            const priceInfo = activeFilter === 'free' ? 'Free' : (currentVipPackage?.amount ? `GHS ${currentVipPackage.amount}` : 'GHS 0')
+                            const bookingInfo = sportyCodeInput || msportCodeInput || footballCodeInput ? 'with booking codes' : 'without booking codes'
+                          }}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
                         >
                           Upload
                         </button>
                       </div>
                     </div>
-              
-              {/* Booking Codes Panel - Absolute positioned overlay */}
-              {showCodePanel && (
-                <div className="absolute bottom-full right-0 mb-2 bg-white p-3 rounded-lg border shadow-lg w-64 z-10">
-                  <div className="flex flex-col space-y-2">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">SportyBet Code</label>
-                      <input
-                        type="text"
-                        value={sportyCodeInput}
-                        onChange={(e) => setSportyCodeInput(e.target.value)}
-                        placeholder="Enter code"
-                        className="w-full px-2 py-1 border rounded text-xs"
-                      />
                   </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">MSport Code</label>
-                      <input
-                        type="text"
-                        value={msportCodeInput}
-                        onChange={(e) => setMsportCodeInput(e.target.value)}
-                        placeholder="Enter code"
-                        className="w-full px-2 py-1 border rounded text-xs"
-                      />
                 </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Football.com Code</label>
+              </div>
+            )}
+
+            {/* Load Games Section - Only show when category is selected and no games are loaded */}
+            {activeFilter !== 'all' && loadedGames.length === 0 && (
+              <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 className="text-xl font-bold mb-4">Load Games - {activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}</h2>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 relative">
                     <input
                       type="text"
-                        value={footballCodeInput}
-                        onChange={(e) => setFootballCodeInput(e.target.value)}
-                        placeholder="Enter code"
-                        className="w-full px-2 py-1 border rounded text-xs"
-                      />
+                      placeholder={`Enter SportyBet booking code for ${activeFilter === 'free' ? 'Free Predictions' : activeFilter === 'vip1' ? 'VIP 1' : activeFilter === 'vip2' ? 'VIP 2' : 'VIP 3'}...`}
+                      value={loadInput}
+                      onChange={(e) => setLoadInput(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-green-500 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
+                    />
+                    {loadInput && (
+                 <button
+                        onClick={clearLoadInput}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                 >
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                   </svg>
+                 </button>
+                    )}
                </div>
                   <button 
-                      onClick={() => {
-                        setIsBookingAttached(true);
-                        setShowCodePanel(false);
-                      }}
-                      className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-colors"
-                    >
-                      Save Codes
+                    onClick={handleLoadGames}
+                    disabled={isLoading}
+                    className={`px-6 py-3 rounded-lg font-bold transition-colors ${
+                      isLoading 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-[#191970] hover:bg-[#2e2e8f]'
+                    } text-white`}
+                  >
+                    {isLoading ? 'Loading...' : 'Load'}
                   </button>
                 </div>
               </div>
             )}
-            </div>
+
           </div>
                  )}
 
          {/* Games Control Tab */}
          {activeTab === 'gamescontrol' && (
            <div className="space-y-6">
+             {/* VIP Package Availability Control */}
              <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Games Control Panel</h2>
-              <p className="text-gray-600">Manage and control game settings from here.</p>
+               <h2 className="text-xl font-bold mb-4">VIP Package Availability Control</h2>
+               <p className="text-gray-600 mb-6">Control which VIP packages are available for purchase and which are sold out</p>
+               
+               {/* Bulk control buttons removed as requested */}
+
+               {/* VIP Packages List with Availability Control */}
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {vipPackages.map((pkg) => (
+                   <div key={pkg.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                     <h3 className="text-lg font-bold text-gray-900 mb-4">
+                      
+                       {pkg.name.replace(/^vip(\d)$/i, (_: unknown, n: string) => `VIP ${n}`)
+}
+                     </h3>
+                     <div className="mb-2">
+                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${pkg.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                         {pkg.available ? 'Available' : 'Sold Out'}
+                       </span>
                      </div>
+                     {vipAvailabilityError[pkg.id] && (
+                       <div className="text-xs text-red-600 mb-2">{vipAvailabilityError[pkg.id]}</div>
+                     )}
+                     <div className="flex gap-2">
+                       <button
+                         disabled={vipAvailabilityLoading[pkg.id] || !pkg.available}
+                         onClick={async () => {
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: true }));
+                           setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: '' }));
+                           try {
+                             const res = await fetch(`https://api.betgeniuz.com/games/mark-sold-out/${pkg.id}`, { method: 'POST' });
+                             if (!res.ok) throw new Error('Failed to mark as sold out');
+                             setVipPackages(vipPackages.map(p => p.id === pkg.id ? { ...p, available: false } : p));
+                           } catch (err: any) {
+                             setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: err?.message || 'Error' }));
+                           }
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: false }));
+                         }}
+                         className={`w-1/2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                           !pkg.available ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'
+                         }`}
+                       >
+                         {vipAvailabilityLoading[pkg.id] && pkg.available ? 'Processing...' : 'Mark as Sold Out'}
+                       </button>
+                       <button
+                         disabled={vipAvailabilityLoading[pkg.id] || pkg.available}
+                         onClick={async () => {
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: true }));
+                           setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: '' }));
+                           try {
+                             const res = await fetch(`https://api.betgeniuz.com/games/update-availability/${pkg.id}`, { method: 'POST' });
+                             if (!res.ok) throw new Error('Failed to mark as available');
+                             setVipPackages(vipPackages.map(p => p.id === pkg.id ? { ...p, available: true } : p));
+                           } catch (err: any) {
+                             setVipAvailabilityError(prev => ({ ...prev, [pkg.id]: err?.message || 'Error' }));
+                           }
+                           setVipAvailabilityLoading(prev => ({ ...prev, [pkg.id]: false }));
+                         }}
+                         className={`w-1/2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                           pkg.available ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
+                         }`}
+                       >
+                         {vipAvailabilityLoading[pkg.id] && !pkg.available ? 'Processing...' : 'Mark as Available'}
+                       </button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+
+             {/* VIP Availability Summary removed */}
            </div>
          )}
 
-        {/* Users Tab */}
+
+         {/* Users Management Tab */}
         {activeTab === 'users' && (
-          <div className="space-y-6">
-            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">User Management</h2>
-              <p className="text-gray-600">Manage users from here.</p>
+          <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold">User Management</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.map((user) => {
+                    const isInactive = isUserInactive(user.lastActivity)
+                    const daysSinceActivity = getDaysSinceActivity(user.lastActivity)
+                    
+                    return (
+                      <tr key={user.id} className={isInactive ? 'bg-red-50' : ''}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {user.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {user.phone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            user.status === 'active' && !isInactive
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {user.status === 'active' && !isInactive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
-          <div className="space-y-6">
-            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Notifications</h2>
-              <p className="text-gray-600">Manage notifications from here.</p>
+          <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold">Notification Management</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {notificationsLoading && (
+                <div className="text-center text-blue-600 font-medium py-8">Loading notifications...</div>
+              )}
+              {notificationsError && !notificationsLoading && (
+                <div className="text-center text-red-600 font-medium py-8">{notificationsError}</div>
+              )}
+              {!notificationsLoading && !notificationsError && notifications.length === 0 && (
+                <div className="text-center text-gray-500 py-8">No notifications found.</div>
+              )}
+              {!notificationsLoading && !notificationsError && notifications.map((notification) => (
+                <div 
+                  key={notification.id} 
+                  className={`p-4 rounded-lg border ${
+                    notification.read 
+                      ? 'bg-gray-50 border-gray-200' 
+                      : 'bg-blue-50 border-blue-200'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          notification.type === 'success' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {notification.type === 'success' ? 'Purchase' : 'Sign Up'}
+                        </span>
+                        {!notification.read && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <p className={`font-medium ${
+                        notification.read ? 'text-gray-600' : 'text-blue-800'
+                      }`}>
+                        {notification.message}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {notification.timestamp}
+                      </p>
+                    </div>
+                    {!notification.read && (
+                      <button
+                        onClick={() => markNotificationRead(notification.id)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs ml-4"
+                        disabled={notificationsLoading}
+                      >
+                        Mark Read
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* SMS Tab */}
+        {/* Analytics Tab */}
         {activeTab === 'sms' && (
-          <div className="space-y-6">
           <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">SMS Management</h2>
-              <p className="text-gray-600">Send and manage SMS from here.</p>
+            <h2 className="text-xl font-bold mb-4">Send SMS to Users</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <textarea
+                  value={smsMessage}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                  rows={6}
+                  maxLength={480}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#191970] focus:border-transparent"
+                  placeholder="Type the SMS to send to users..."
+                />
+                <div className="text-xs text-gray-500 mt-1">{smsMessage.length}/480 characters</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Recipients</label>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      checked={smsRecipients === 'all'}
+                      onChange={() => setSmsRecipients('all')}
+                    />
+                    <span className="text-sm text-gray-700">All Users</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      checked={smsRecipients === 'custom'}
+                      onChange={() => setSmsRecipients('custom')}
+                    />
+                    <span className="text-sm text-gray-700">Custom Numbers</span>
+                  </label>
+                  {smsRecipients === 'custom' && (
+                    <textarea
+                      value={customNumbers}
+                      onChange={(e) => setCustomNumbers(e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#191970] focus:border-transparent"
+                      placeholder="Enter comma-separated phone numbers, e.g. 0551112222,0243334444"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={async () => {
+                  if (!smsMessage.trim()) { alert('Please enter a message'); return }
+                  setIsSendingSms(true)
+                  await new Promise(r => setTimeout(r, 1200))
+                  const target = smsRecipients === 'all' ? 'all users' : `custom: ${customNumbers}`
+                  alert(`SMS sent to ${target}`)
+                  setIsSendingSms(false)
+                  setSmsMessage('')
+                  setCustomNumbers('')
+                }}
+                disabled={isSendingSms}
+                className={`px-6 py-3 rounded-lg font-bold text-white ${isSendingSms ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#191970] hover:bg-[#2e2e8f]'}`}
+              >
+                {isSendingSms ? 'Sending…' : 'Send SMS'}
+              </button>
             </div>
           </div>
         )}
@@ -1385,9 +1729,286 @@ export default function AdminDashboard() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
+            {/* Admin Management Section */}
             <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Settings</h2>
-              <p className="text-gray-600">Configure application settings from here.</p>
+              <h2 className="text-xl font-bold mb-6 text-[#2e2e8f]">Admin Management</h2>
+              
+              {/* Add New Admin Form */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4 text-gray-700">Add New Admin</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="admin@betgeniuz.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      placeholder="+233 123 456 789"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Admin Role</label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]">
+                      <option value="super_admin">Super Admin</option>
+                      <option value="admin">Admin</option>
+                      <option value="moderator">Moderator</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" defaultChecked />
+                        <span className="text-sm">Manage Games</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" defaultChecked />
+                        <span className="text-sm">Manage Users</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" />
+                        <span className="text-sm">Send SMS</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="mr-2" />
+                        <span className="text-sm">Manage Admins</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <button className="bg-[#2e2e8f] hover:bg-[#1e1e7f] text-white px-6 py-2 rounded-md transition-colors">
+                    Add Admin
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Admins List */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-700">Current Admins</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-[#2e2e8f] flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">AU</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">Admin User</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">admin@betgeniuz.com</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Super Admin</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 minutes ago</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-[#2e2e8f] hover:text-[#1e1e7f] mr-3">Edit</button>
+                          <button className="text-red-600 hover:text-red-900">Deactivate</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">JS</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">John Smith</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">john@betgeniuz.com</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 hour ago</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-[#2e2e8f] hover:text-[#1e1e7f] mr-3">Edit</button>
+                          <button className="text-red-600 hover:text-red-900">Deactivate</button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">MJ</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">Mary Johnson</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">mary@betgeniuz.com</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Moderator</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 days ago</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-[#2e2e8f] hover:text-[#1e1e7f] mr-3">Edit</button>
+                          <button className="text-green-600 hover:text-green-900">Activate</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* System Settings Section */}
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold mb-6 text-[#2e2e8f]">System Settings</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-700">General Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
+                      <input
+                        type="text"
+                        defaultValue="BetGeniuz"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Site URL</label>
+                      <input
+                        type="url"
+                        defaultValue="https://betgeniuz.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+                      <input
+                        type="email"
+                        defaultValue="support@betgeniuz.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-700">Security Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+                      <input
+                        type="number"
+                        defaultValue="30"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
+                      <input
+                        type="number"
+                        defaultValue="5"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2e2e8f]"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input type="checkbox" id="twoFactor" className="mr-2" defaultChecked />
+                      <label htmlFor="twoFactor" className="text-sm font-medium text-gray-700">Enable Two-Factor Authentication</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button className="bg-[#2e2e8f] hover:bg-[#1e1e7f] text-white px-6 py-2 rounded-md transition-colors">
+                  Save Settings
+                </button>
+              </div>
+            </div>
+
+            {/* Notification Settings Section */}
+            <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold mb-6 text-[#2e2e8f]">Notification Settings</h2>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Email Notifications</h4>
+                    <p className="text-xs text-gray-500">Receive email alerts for important events</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">SMS Notifications</h4>
+                    <p className="text-xs text-gray-500">Receive SMS alerts for critical events</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Push Notifications</h4>
+                    <p className="text-xs text-gray-500">Receive browser push notifications</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Admin Alerts</h4>
+                    <p className="text-xs text-gray-500">Get notified when new admins are added</p>
+                  </div>
+                  <input type="checkbox" className="mr-2" defaultChecked />
+                </div>
+              </div>
             </div>
           </div>
         )}

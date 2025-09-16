@@ -537,3 +537,142 @@ export default function VIP() {
   )
 }
 
+                </a>
+
+              </div>
+
+            </div>
+
+
+
+            {/* Quick Links */}
+
+            <div>
+
+              <h4 className="font-semibold mb-4 text-white">Quick Links</h4>
+
+              <ul className="space-y-2 text-sm text-indigo-200">
+
+                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
+
+                <li><a href="/predictions" className="hover:text-white transition-colors">Predictions</a></li>
+
+                <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
+
+                <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
+
+              </ul>
+
+            </div>
+
+
+
+            {/* Support */}
+
+            <div>
+
+              <h4 className="font-semibold mb-4 text-white">Support</h4>
+
+              <ul className="space-y-2 text-sm text-indigo-200">
+
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+
+                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+
+                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+
+              </ul>
+
+            </div>
+
+          </div>
+
+
+
+          {/* Bottom Section */}
+
+          <div className="border-t border-indigo-400 pt-6">
+
+            <div className="flex flex-col md:flex-row justify-between items-center">
+
+              {/* Features */}
+
+              <div className="flex flex-wrap gap-6 mb-4 md:mb-0">
+
+                <div className="flex items-center space-x-2">
+
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+
+                    </svg>
+
+                  </div>
+
+                  <span className="text-sm text-indigo-200">Verified Predictions</span>
+
+                </div>
+
+                <div className="flex items-center space-x-2">
+
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+
+                    </svg>
+
+                  </div>
+
+                  <span className="text-sm text-indigo-200">Expert Analysis</span>
+
+                </div>
+
+                <div className="flex items-center space-x-2">
+
+                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+
+                    </svg>
+
+                  </div>
+
+                  <span className="text-sm text-indigo-200">Gambling Awareness</span>
+
+                </div>
+
+              </div>
+
+
+
+              {/* Copyright */}
+
+              <div className="text-sm text-indigo-200">
+
+                <p>© 2024 BetGeniuz. All rights reserved. | <a href="#" className="hover:text-white transition-colors">Privacy Policy</a> | <a href="#" className="hover:text-white transition-colors">Terms of Service</a></p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </footer>
+
+    </main>
+
+  )
+
+}
+
+
