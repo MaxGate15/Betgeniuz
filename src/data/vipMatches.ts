@@ -23,7 +23,7 @@ export interface VIPPackage {
 
 // Fetch and transform API data to VIPPackage structure
 const fetchVIPMatches = async (): Promise<Record<string, VIPPackage>> => {
-  const res = await fetch('https://api.betgeniuz.com/games/list-vip-slips')
+  const res = await fetch('https://api.betgeniuz.com/games/vip-list')
   const data = await res.json()
   const result: Record<string, VIPPackage> = {}
 

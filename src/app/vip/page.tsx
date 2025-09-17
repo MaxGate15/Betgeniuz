@@ -68,26 +68,37 @@ export default function VIP() {
   const [adminBookingCodes, setAdminBookingCodes] = useState(VIP_BOOKING_CODES)
   
   useEffect(() => {
-    // Initialize with fallback data first
-    setVIPMatchesData(fallbackVIPData)
-    setVipResultsUpdated({ vip1: false, vip2: false, vip3: false })
-    setVipSoldOut({ vip1: false, vip2: false, vip3: false })
-    setLoading(false)
-    
-    // Then try to fetch real data
+    // Try to fetch real data from API first
     const fetchData = async () => {
+      setLoading(true)
       try {
+        console.log('Fetching VIP data from API...')
         const [matches, resultsUpdated, soldOut] = await Promise.all([
           fetchVIPMatches(),
           fetchVIPResultsUpdated(),
           fetchVIPSoldOut()
         ])
-        setVIPMatchesData(matches)
-        setVipResultsUpdated(resultsUpdated)
-        setVipSoldOut(soldOut)
+        console.log('API data received:', { matches, resultsUpdated, soldOut })
+        
+        // Check if we have any VIP data
+        if (Object.keys(matches).length > 0) {
+          setVIPMatchesData(matches)
+          setVipResultsUpdated(resultsUpdated)
+          setVipSoldOut(soldOut)
+        } else {
+          // No VIP packages available from admin
+          setVIPMatchesData({})
+          setVipResultsUpdated({})
+          setVipSoldOut({})
+        }
       } catch (error) {
-        console.log('Using fallback data due to API error:', error)
+        console.error('API error:', error)
+        // No fallback data - show empty state
+        setVIPMatchesData({})
+        setVipResultsUpdated({})
+        setVipSoldOut({})
       }
+      setLoading(false)
     }
     fetchData()
 
@@ -157,7 +168,9 @@ export default function VIP() {
   }
 
   const renderMatchResult = (match: any, vipType: string) => {
-    if (!vipResultsUpdated[vipType as keyof typeof vipResultsUpdated]) return null
+    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
+    const isResultsUpdated = vipResultsUpdated[vipType] || vipData.isResultsUpdated
+    if (!isResultsUpdated) return null
 
   return (
                       <div className="flex items-center justify-between">
@@ -191,8 +204,8 @@ export default function VIP() {
     }
     
     const isPurchased = purchasedPackages.includes(vipData.name)
-    const isResultsUpdated = vipResultsUpdated[vipType]
-    const isSoldOut = vipSoldOut[vipType]
+    const isResultsUpdated = vipResultsUpdated[vipType] || vipData.isResultsUpdated
+    const isSoldOut = vipSoldOut[vipType] || vipData.isSoldOut
     const bookingCodes = adminBookingCodes[vipType]
 
     return (
@@ -201,20 +214,33 @@ export default function VIP() {
         {/* VIP Package Name */}
         <div className="text-lg font-bold text-gray-800 mb-3">{vipData.name}</div>
         
-        {/* Matches Section - Show only team names */}
+        {/* Matches Section - Show team names and details when updated */}
         <div className="mb-4">
           <div className="space-y-2">
             {vipData.matches.map((match: any) => (
               <div key={match.id} className="text-left">
                 <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
+                {isResultsUpdated && (
+                  <div className="mt-2">
+                    <div className="text-xs text-gray-600 mb-1">
+                      <span className="font-medium">Prediction:</span> {match.prediction || match.option || 'N/A'}
                         </div>
+                    <div className="text-xs text-gray-600 mb-2">
+                      <span className="font-medium">Odds:</span> {match.odds || 'N/A'}
+                        </div>
+                    {renderMatchResult(match, vipType)}
+                </div>
+                )}
+              </div>
             ))}
-                  </div>
+          </div>
               </div>
               
         {/* Action Section */}
                 <div>
-          {isPurchased ? (
+          {isResultsUpdated ? (
+            // When results are updated, show booking codes if purchased, otherwise show "Results Available"
+            isPurchased ? (
                     <div className="space-y-2">
                       <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
                         ✓ Purchased — Booking Codes
@@ -222,25 +248,31 @@ export default function VIP() {
                       <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Sporty:</span>
-                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
-                    {bookingCodes.sporty}
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
+                      {bookingCodes.sporty}
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">MSport:</span>
-                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
-                    {bookingCodes.msport}
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
+                      {bookingCodes.msport}
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Football.com:</span>
-                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
-                    {bookingCodes.football}
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
+                      {bookingCodes.football}
                           </button>
                         </div>
                       </div>
                     </div>
+            ) : (
+              <div className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                Results Available - Purchase to View Booking Codes
+              </div>
+            )
                   ) : (
+            // When results are not updated, show buy button
                     <button 
               onClick={() => handleBuyNowClick(vipType, cardIndex)}
                       className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
@@ -309,11 +341,23 @@ export default function VIP() {
       {/* VIP Packages Section */}
       <section id="vip-packages" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8 items-start">
-            {renderVIPCard('vip1', 0)}
-            {renderVIPCard('vip2', 1)}
-            {renderVIPCard('vip3', 2)}
-          </div>
+          {Object.keys(VIP_MATCHES_DATA).length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-8 items-start">
+              {Object.keys(VIP_MATCHES_DATA).map((vipType, index) => 
+                renderVIPCard(vipType as 'vip1' | 'vip2' | 'vip3', index)
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="bg-gray-100 rounded-lg p-8 max-w-md mx-auto">
+                <div className="text-6xl mb-4">⚽</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">No Games Available</h3>
+                <p className="text-gray-600">
+                  There are currently no VIP packages available. Please check back later or contact support.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -395,7 +439,6 @@ export default function VIP() {
                 <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
                 <li><a href="/predictions" className="hover:text-white transition-colors">Predictions</a></li>
                 <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
 

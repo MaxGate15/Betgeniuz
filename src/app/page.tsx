@@ -84,30 +84,26 @@ export default function Home() {
       
       {/* Hero Section */}
       <section 
-        className="relative py-32 px-4 pt-40 min-h-[100vh] bg-cover bg-top bg-no-repeat"
-        style={{ backgroundImage: 'url(/hero-background.png.png)' }}
+        className="relative py-32 px-4 pt-40 min-h-[100vh]"
+        style={{ 
+          backgroundImage: 'url("/hero-Betgeniuz%201%20(1).png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat'
+        }}
       >
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            Expert Sports
-            <span className="block text-[#f59e0b]">Predictions</span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-indigo-200 mb-6 max-w-2xl mx-auto">
-            Get professional betting tips and predictions for football matches. 
-            Make informed decisions with our expert analysis.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="max-w-6xl mx-auto text-center h-full flex flex-col justify-end pb-32">
+          {/* Buttons positioned in lower-right area near player's foot */}
+          <div className="absolute bottom-8 right-1/2 transform translate-x-1/2 flex flex-col sm:flex-row gap-3">
             <button 
               onClick={() => handleButtonClick('/vip')}
-              className="bg-[#f59e0b] hover:bg-[#d97706] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors"
+              className="bg-[#f59e0b] hover:bg-[#d97706] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg"
             >
               Join VIP
             </button>
             <button
               onClick={() => handleButtonClick('/vvip')}
-              className="border-2 border-[#f59e0b] text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors"
+              className="bg-white text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg border-2 border-[#f59e0b]"
             >
               Join Telegram
             </button>
@@ -339,13 +335,21 @@ export default function Home() {
       </section>
 
       {/* Winning Team Section */}
-      <section className="py-16 px-4 bg-gradient-to-br from-[#191970] to-[#2e2e8f]">
+      <section 
+        className="py-16 px-4 relative"
+        style={{ 
+          backgroundImage: 'url("/F-Betgeniuz 1 (2).png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-[#f59e0b] mb-6 uppercase">
             BetGeniuz
           </h2>
-          <p className="text-xl text-indigo-200 max-w-3xl mx-auto leading-relaxed mb-8">
-            Join the winning team today and discover accurate high and low-risk predictions designed to enhance your success. Don't wait—be part of our next big win and unlock countless opportunities to stay ahead in the game!
+          <p className="text-xl text-white max-w-3xl mx-auto leading-relaxed mb-8">
+            Join the winning team today and discover accurate high and low-risk predictions designed to enhance your success. Don't wait be part of our next big win and unlock countless opportunities to stay ahead in the game!
           </p>
           
           {/* Get Started Button */}
@@ -395,7 +399,6 @@ export default function Home() {
                 <li><a href="/" className="text-indigo-200 hover:text-white transition-colors">Home</a></li>
                 <li><button onClick={() => handleButtonClick('/predictions')} className="text-indigo-200 hover:text-white transition-colors">Predictions</button></li>
                 <li><a href="/about" className="text-indigo-200 hover:text-white transition-colors">About</a></li>
-                <li><a href="/contact" className="text-indigo-200 hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
 

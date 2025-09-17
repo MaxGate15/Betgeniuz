@@ -223,6 +223,9 @@ export default function AdminDashboard() {
   const [sportyCodeInput, setSportyCodeInput] = useState('')
   const [msportCodeInput, setMsportCodeInput] = useState('')
   const [footballCodeInput, setFootballCodeInput] = useState('')
+  const [selectedSlips, setSelectedSlips] = useState<Set<string>>(new Set())
+  const [isSelectMode, setIsSelectMode] = useState(false)
+  const [hiddenSlips, setHiddenSlips] = useState<Set<string>>(new Set())
   const [smsMessage, setSmsMessage] = useState('')
   const [smsRecipients, setSmsRecipients] = useState<'all' | 'custom'>('all')
   const [customNumbers, setCustomNumbers] = useState('')
@@ -553,28 +556,46 @@ export default function AdminDashboard() {
         console.error('Update error:', errText);
         return;
       }
+      
+      // Find the slip to check if all games are now updated
+      const currentSlip = uploadedSlips.find(slip => slip.id === bookingId);
+      if (!currentSlip) return;
+      
+      // Update games with new results
+      const updatedGames = currentSlip.games.map((g: any) => {
+        const found = games.find(upd => upd.game_id === g.id);
+        return found ? { ...g, result: found.status } : g;
+      });
+      
+      // Check if all games in the slip have been updated (have a result other than 'pending')
+      const allGamesUpdated = updatedGames.every((game: any) => 
+        game.result && game.result !== 'pending'
+      );
+      
       // Update local state for uploadedSlips and selectedSlip
       setUploadedSlips(prev => prev.map(slip => {
         if (slip.id !== bookingId) return slip;
         return {
           ...slip,
-          games: slip.games.map((g: any) => {
-            const found = games.find(upd => upd.game_id === g.id);
-            return found ? { ...g, result: found.status } : g;
-          })
+          status: allGamesUpdated ? 'updated' : slip.status, // Only mark as updated if all games are done
+          games: updatedGames
         };
       }));
+      
       if (selectedSlip && selectedSlip.id === bookingId) {
         setSelectedSlip((prev: any) => ({
           ...prev,
-          games: prev.games.map((g: any) => {
-            const found = games.find(upd => upd.game_id === g.id);
-            return found ? { ...g, result: found.status } : g;
-          })
+          status: allGamesUpdated ? 'updated' : prev.status, // Only mark as updated if all games are done
+          games: updatedGames
         }));
       }
-      // Optionally show a success notification
-      alert('Game statuses updated successfully!');
+      
+      // Show success notification
+      if (allGamesUpdated) {
+        alert('All games updated! Slip marked as completed.');
+      } else {
+        alert('Game status updated successfully!');
+      }
     } catch (err) {
       alert('Failed to update game statuses. See console for details.');
       console.error('Update error:', err);
@@ -583,6 +604,70 @@ export default function AdminDashboard() {
 
   const clearLoadInput = () => {
     setLoadInput('')
+  }
+
+  const clearAllSlips = () => {
+    if (confirm(`Are you sure you want to clear all ${uploadedSlips.length} slips? This action cannot be undone.`)) {
+      setUploadedSlips([])
+      setSelectedSlip(null)
+      alert('All slips have been cleared successfully!')
+    }
+  }
+
+  const toggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode)
+    setSelectedSlips(new Set())
+  }
+
+  const toggleSlipSelection = (slipId: string) => {
+    setSelectedSlips(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(slipId)) {
+        newSet.delete(slipId)
+      } else {
+        newSet.add(slipId)
+      }
+      return newSet
+    })
+  }
+
+  const selectAllSlips = () => {
+    const visibleSlips = uploadedSlips.filter(slip => !hiddenSlips.has(slip.id || slip.booking?.id || slip.shareCode))
+    setSelectedSlips(new Set(visibleSlips.map(slip => slip.id || slip.booking?.id || slip.shareCode)))
+  }
+
+  const deselectAllSlips = () => {
+    setSelectedSlips(new Set())
+  }
+
+  const deleteSelectedSlips = () => {
+    if (selectedSlips.size === 0) {
+      alert('Please select slips to delete first.')
+      return
+    }
+
+    if (confirm(`Are you sure you want to hide ${selectedSlips.size} selected slips from the view? They will remain in the database for filtering.`)) {
+      setHiddenSlips(prev => {
+        const newSet = new Set(prev)
+        selectedSlips.forEach(slipId => newSet.add(slipId))
+        return newSet
+      })
+      setSelectedSlips(new Set())
+      setIsSelectMode(false)
+      alert(`${selectedSlips.size} slips have been hidden from view successfully!`)
+    }
+  }
+
+  const restoreHiddenSlips = () => {
+    if (hiddenSlips.size === 0) {
+      alert('No hidden slips to restore.')
+      return
+    }
+
+    if (confirm(`Are you sure you want to restore all ${hiddenSlips.size} hidden slips?`)) {
+      setHiddenSlips(new Set())
+      alert('All hidden slips have been restored!')
+    }
   }
 
   return (
@@ -766,8 +851,72 @@ export default function AdminDashboard() {
             {activeFilter === 'all' && (
               <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <div>
                   <h2 className="text-xl font-bold">Uploaded Slips</h2>
-                  <p className="text-sm text-gray-600 mt-1">Click on a slip to view and edit games</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {isSelectMode ? 'Select slips to hide from view' : 'Click on a slip to view and edit games'}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {uploadedSlips.length > 0 && !isSelectMode && (
+                        <button
+                          onClick={toggleSelectMode}
+                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                          title="Select slips to hide"
+                        >
+                          Select Mode
+                        </button>
+                      )}
+                      {isSelectMode && (
+                        <>
+                          <button
+                            onClick={selectAllSlips}
+                            className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={deselectAllSlips}
+                            className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
+                          >
+                            Deselect All
+                          </button>
+                          <button
+                            onClick={deleteSelectedSlips}
+                            disabled={selectedSlips.size === 0}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          >
+                            Hide Selected ({selectedSlips.size})
+                          </button>
+                          <button
+                            onClick={toggleSelectMode}
+                            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                      {hiddenSlips.size > 0 && (
+                        <button
+                          onClick={restoreHiddenSlips}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                          title="Restore hidden slips"
+                        >
+                          Restore Hidden ({hiddenSlips.size})
+                        </button>
+                      )}
+                      {uploadedSlips.length > 0 && !isSelectMode && (
+                        <button
+                          onClick={clearAllSlips}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                          title="Clear all slips"
+                        >
+                          Clear All ({uploadedSlips.length})
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 {slipsLoading ? (
@@ -782,19 +931,41 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-200">
-                    {uploadedSlips.map((slip: any) => {
-                      const isSelected = selectedSlip?.id === (slip.id || slip.booking?.id || slip.shareCode);
+                    {uploadedSlips
+                      .filter(slip => !hiddenSlips.has(slip.id || slip.booking?.id || slip.shareCode))
+                      .map((slip: any) => {
+                      const slipId = slip.id || slip.booking?.id || slip.shareCode;
+                      const isSelected = selectedSlip?.id === slipId;
+                      const isCheckboxSelected = selectedSlips.has(slipId);
                       return (
-                        <div key={slip.id || slip.booking?.id || slip.shareCode}>
+                        <div key={slipId}>
                           {/* Slip Header */}
                           <div
-                            className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                            className={`px-6 py-4 hover:bg-gray-50 transition-colors ${
                               isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                            }`}
-                            onClick={() => setSelectedSlip(isSelected ? null : slip)}
+                            } ${isSelectMode ? 'cursor-default' : 'cursor-pointer'}`}
+                            onClick={() => {
+                              if (!isSelectMode) {
+                                setSelectedSlip(isSelected ? null : slip)
+                              }
+                            }}
                           >
                             <div className="flex justify-between items-center">
-                              <div>
+                              <div className="flex items-center space-x-3">
+                                {isSelectMode && (
+                                  <div className="flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={isCheckboxSelected}
+                                      onChange={(e) => {
+                                        e.stopPropagation()
+                                        toggleSlipSelection(slipId)
+                                      }}
+                                      className="w-3 h-3 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-1"
+                                    />
+                                  </div>
+                                )}
+                                <div>
                                 <h3 className="text-lg font-medium text-gray-900">
                                   {slip.category === 'free'
                                     ? 'Free Slip'
@@ -821,6 +992,7 @@ export default function AdminDashboard() {
                                     });
                                   })()}
                                 </p>
+                                </div>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -945,16 +1117,21 @@ export default function AdminDashboard() {
                                                   await updateGamesStatus(slip.id, [
                                                     { game_id: game.id, status: 'won' }
                                                   ]);
-                                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                                    s.id === slip.id
-                                                      ? {
-                                                          ...s,
-                                                          games: s.games.map((g: any) =>
-                                                            g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
-                                                          )
-                                                        }
-                                                      : s
-                                                  );
+                                                  const updatedSlips = uploadedSlips.map((s: any) => {
+                                                    if (s.id !== slip.id) return s;
+                                                    const updatedGames = s.games.map((g: any) =>
+                                                      g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
+                                                    );
+                                                    // Check if all games are now updated
+                                                    const allGamesUpdated = updatedGames.every((g: any) => 
+                                                      g.result && g.result !== 'pending'
+                                                    );
+                                                    return {
+                                                      ...s,
+                                                      status: allGamesUpdated ? 'updated' : s.status,
+                                                      games: updatedGames
+                                                    };
+                                                  });
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
@@ -971,16 +1148,21 @@ export default function AdminDashboard() {
                                                   await updateGamesStatus(slip.id, [
                                                     { game_id: game.id, status: 'lost' }
                                                   ]);
-                                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                                    s.id === slip.id
-                                                      ? {
-                                                          ...s,
-                                                          games: s.games.map((g: any) =>
-                                                            g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
-                                                          )
-                                                        }
-                                                      : s
-                                                  );
+                                                  const updatedSlips = uploadedSlips.map((s: any) => {
+                                                    if (s.id !== slip.id) return s;
+                                                    const updatedGames = s.games.map((g: any) =>
+                                                      g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
+                                                    );
+                                                    // Check if all games are now updated
+                                                    const allGamesUpdated = updatedGames.every((g: any) => 
+                                                      g.result && g.result !== 'pending'
+                                                    );
+                                                    return {
+                                                      ...s,
+                                                      status: allGamesUpdated ? 'updated' : s.status,
+                                                      games: updatedGames
+                                                    };
+                                                  });
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
@@ -997,16 +1179,21 @@ export default function AdminDashboard() {
                                                   await updateGamesStatus(slip.id, [
                                                     { game_id: game.id, status: 'pending' }
                                                   ]);
-                                                  const updatedSlips = uploadedSlips.map((s: any) =>
-                                                    s.id === slip.id
-                                                      ? {
-                                                          ...s,
-                                                          games: s.games.map((g: any) =>
-                                                            g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
-                                                          )
-                                                        }
-                                                      : s
-                                                  );
+                                                  const updatedSlips = uploadedSlips.map((s: any) => {
+                                                    if (s.id !== slip.id) return s;
+                                                    const updatedGames = s.games.map((g: any) =>
+                                                      g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
+                                                    );
+                                                    // Check if all games are now updated
+                                                    const allGamesUpdated = updatedGames.every((g: any) => 
+                                                      g.result && g.result !== 'pending'
+                                                    );
+                                                    return {
+                                                      ...s,
+                                                      status: allGamesUpdated ? 'updated' : s.status,
+                                                      games: updatedGames
+                                                    };
+                                                  });
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}

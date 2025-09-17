@@ -114,18 +114,66 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
   const [adminVipPackages, setAdminVipPackages] = useState(VIP_PACKAGES)
   const [adminBookingCodes, setAdminBookingCodes] = useState(VIP_BOOKING_CODES)
 
+  const fallbackVIPData = {
+    vip1: {
+      name: 'VIP 1',
+      price: 'GHS 50',
+      matches: [
+        { id: '1', homeTeam: 'Arsenal', awayTeam: 'Chelsea', option: 'Home', odds: '1.85', result: 'pending' },
+        { id: '2', homeTeam: 'Manchester United', awayTeam: 'Liverpool', option: 'Over 2.5', odds: '2.15', result: 'pending' },
+        { id: '3', homeTeam: 'Barcelona', awayTeam: 'Real Madrid', option: 'Away', odds: '1.95', result: 'pending' }
+      ]
+    },
+    vip2: {
+      name: 'VIP 2', 
+      price: 'GHS 100',
+      matches: [
+        { id: '4', homeTeam: 'PSG', awayTeam: 'Bayern Munich', option: 'Home', odds: '2.10', result: 'pending' },
+        { id: '5', homeTeam: 'Juventus', awayTeam: 'AC Milan', option: 'Under 3.5', odds: '1.75', result: 'pending' }
+      ]
+    },
+    vip3: {
+      name: 'VIP 3',
+      price: 'GHS 200', 
+      matches: [
+        { id: '6', homeTeam: 'Manchester City', awayTeam: 'Tottenham', option: 'Home', odds: '1.90', result: 'pending' },
+        { id: '7', homeTeam: 'Inter Milan', awayTeam: 'Napoli', option: 'Draw', odds: '3.20', result: 'pending' },
+        { id: '8', homeTeam: 'Atletico Madrid', awayTeam: 'Sevilla', option: 'Away', odds: '2.40', result: 'pending' }
+      ]
+    }
+  }
+
   useEffect(() => {
-    // Fetch VIP data from API
+    // Try to fetch real data from API first
     const fetchData = async () => {
       setVipLoading(true)
-      const [matches, resultsUpdated, soldOut] = await Promise.all([
-        fetchVIPMatches(),
-        fetchVIPResultsUpdated(),
-        fetchVIPSoldOut()
-      ])
-      setVIPMatchesData(matches)
-      setVipResultsUpdated(resultsUpdated)
-      setVipSoldOut(soldOut)
+      try {
+        console.log('Fetching VIP data from API...')
+        const [matches, resultsUpdated, soldOut] = await Promise.all([
+          fetchVIPMatches(),
+          fetchVIPResultsUpdated(),
+          fetchVIPSoldOut()
+        ])
+        console.log('API data received:', { matches, resultsUpdated, soldOut })
+        
+        // Check if we have any VIP data
+        if (Object.keys(matches).length > 0) {
+          setVIPMatchesData(matches)
+          setVipResultsUpdated(resultsUpdated)
+          setVipSoldOut(soldOut)
+        } else {
+          // No VIP packages available from admin
+          setVIPMatchesData({})
+          setVipResultsUpdated({})
+          setVipSoldOut({})
+        }
+      } catch (error) {
+        console.error('API error:', error)
+        // No fallback data - show empty state
+        setVIPMatchesData({})
+        setVipResultsUpdated({})
+        setVipSoldOut({})
+      }
       setVipLoading(false)
     }
     fetchData()
@@ -214,12 +262,36 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
     )
   }
 
+  const renderMatchResult = (match: any, vipType: string) => {
+    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
+    const isResultsUpdated = vipResultsUpdated[vipType] || vipData.isResultsUpdated
+    if (!isResultsUpdated) return null
+
+    return (
+      <div className="flex items-center justify-between">
+        <div className="flex space-x-2">
+          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
+          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
+        </div>
+        <div className={`w-6 h-6 ${match.result === 'win' ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
+          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+            {match.result === 'win' ? (
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            ) : (
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            )}
+          </svg>
+        </div>
+      </div>
+    )
+  }
+
   const renderVIPCard = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
-    const vipData = VIP_MATCHES_DATA[vipType]
+    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
     if (!vipData) return null
     const isPurchased = purchasedPackages.includes(vipData.name)
-    const isResultsUpdated = vipResultsUpdated[vipType]
-    const isSoldOut = vipSoldOut[vipType]
+    const isResultsUpdated = vipResultsUpdated[vipType] || vipData.isResultsUpdated
+    const isSoldOut = vipSoldOut[vipType] || vipData.isSoldOut
     const bookingCodes = adminBookingCodes[vipType]
 
     return (
@@ -227,12 +299,23 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
         {/* VIP Package Name */}
         <div className="text-lg font-bold text-gray-800 mb-3">{vipData.name}</div>
         
-        {/* Matches Section - Show only team names */}
+        {/* Matches Section - Show team names and details when updated */}
         <div className="mb-4">
           <div className="space-y-2">
             {vipData.matches.map((match: any) => (
               <div key={match.id} className="text-left">
                 <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
+                {isResultsUpdated && (
+                  <div className="mt-2">
+                    <div className="text-xs text-gray-600 mb-1">
+                      <span className="font-medium">Prediction:</span> {match.prediction || match.option || 'N/A'}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-2">
+                      <span className="font-medium">Odds:</span> {match.odds || 'N/A'}
+                    </div>
+                    {renderMatchResult(match, vipType)}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -240,33 +323,41 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
               
         {/* Action Section */}
         <div>
-          {isPurchased ? (
-            <div className="space-y-2">
-              <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                ✓ Purchased — Booking Codes
+          {isResultsUpdated ? (
+            // When results are updated, show booking codes if purchased, otherwise show "Results Available"
+            isPurchased ? (
+              <div className="space-y-2">
+                <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                  ✓ Purchased — Booking Codes
+                </div>
+                <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Sporty:</span>
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
+                      {bookingCodes.sporty}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">MSport:</span>
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
+                      {bookingCodes.msport}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Football.com:</span>
+                    <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
+                      {bookingCodes.football}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Sporty:</span>
-                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
-                    {bookingCodes.sporty}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">MSport:</span>
-                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
-                    {bookingCodes.msport}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Football.com:</span>
-                  <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
-                    {bookingCodes.football}
-                  </button>
-                </div>
+            ) : (
+              <div className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                Results Available - Purchase to View Booking Codes
               </div>
-            </div>
+            )
           ) : (
+            // When results are not updated, show buy button
             <button 
               onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
               className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
@@ -315,30 +406,26 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
       
       {/* Hero Section */}
       <section 
-        className="relative py-32 px-4 pt-40 min-h-[100vh] bg-cover bg-top bg-no-repeat"
-        style={{ backgroundImage: 'url(/hero-background.png.png)' }}
+        className="relative py-32 px-4 pt-40 min-h-[100vh]"
+        style={{ 
+          backgroundImage: 'url("/hero-Betgeniuz%201%20(1).png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat'
+        }}
       >
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            Expert Sports
-            <span className="block text-[#f59e0b]">Predictions</span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-indigo-200 mb-6 max-w-2xl mx-auto">
-            Get professional betting tips and predictions for football matches. 
-            Make informed decisions with our expert analysis.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="max-w-6xl mx-auto text-center h-full flex flex-col justify-end pb-32">
+          {/* Buttons positioned in lower-right area near player's foot */}
+          <div className="absolute bottom-8 right-1/2 transform translate-x-1/2 flex flex-col sm:flex-row gap-3">
             <button 
               onClick={() => handleButtonClick('/vip')}
-              className="bg-[#f59e0b] hover:bg-[#d97706] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors"
+              className="bg-[#f59e0b] hover:bg-[#d97706] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg"
             >
               Join VIP
             </button>
             <button
               onClick={() => handleButtonClick('/vvip')}
-              className="border-2 border-[#f59e0b] text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors"
+              className="bg-white text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg border-2 border-[#f59e0b]"
             >
               Join Telegram
             </button>
@@ -574,11 +661,21 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
         <div className="max-w-6xl mx-auto">
           {vipLoading ? (
             <div className="text-xl font-semibold text-gray-800 text-center py-8">Loading VIP Packages...</div>
-          ) : (
+          ) : Object.keys(VIP_MATCHES_DATA).length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8 items-start">
-              {renderVIPCard('vip1', 0)}
-              {renderVIPCard('vip2', 1)}
-              {renderVIPCard('vip3', 2)}
+              {Object.keys(VIP_MATCHES_DATA).map((vipType, index) => 
+                renderVIPCard(vipType as 'vip1' | 'vip2' | 'vip3', index)
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="bg-gray-100 rounded-lg p-8 max-w-md mx-auto">
+                <div className="text-6xl mb-4">⚽</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">No Games Available</h3>
+                <p className="text-gray-600">
+                  There are currently no VIP packages available. Please check back later or contact support.
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -660,7 +757,6 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
                 <li><a href="/" className="text-indigo-200 hover:text-[#f59e0b] transition-colors">Home</a></li>
                 <li><a href="/predictions" className="text-indigo-200 hover:text-[#f59e0b] transition-colors">Predictions</a></li>
                 <li><a href="/about" className="text-indigo-200 hover:text-[#f59e0b] transition-colors">About</a></li>
-                <li><a href="/contact" className="text-indigo-200 hover:text-[#f59e0b] transition-colors">Contact</a></li>
               </ul>
             </div>
 
