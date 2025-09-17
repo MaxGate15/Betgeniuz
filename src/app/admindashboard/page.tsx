@@ -1871,15 +1871,14 @@ export default function AdminDashboard() {
                     />
                     <span className="text-sm text-gray-700">All Users</span>
                   </label>
-                  
-                  <label className="flex items-center space-x-2">
+                  {/* <label className="flex items-center space-x-2">
                     <input
                       type="radio"
                       checked={smsRecipients === 'custom'}
                       onChange={() => setSmsRecipients('custom')}
                     />
                     <span className="text-sm text-gray-700">Custom Numbers</span>
-                  </label>
+                  </label> */}
                   {smsRecipients === 'custom' && (
                     <textarea
                       value={customNumbers}
@@ -1897,9 +1896,30 @@ export default function AdminDashboard() {
                 onClick={async () => {
                   if (!smsMessage.trim()) { alert('Please enter a message'); return }
                   setIsSendingSms(true)
-                  await new Promise(r => setTimeout(r, 1200))
-                  const target = smsRecipients === 'all' ? 'all users' : `custom: ${customNumbers}`
-                  alert(`SMS sent to ${target}`)
+                  try {
+                    let response;
+                    let body;
+                    if (smsRecipients === 'all') {
+                        body = '';
+                    } else {
+                        body = '';
+                    }
+                      response = await fetch(`https://api.betgeniuz.com/sms/send_bulk?message=${encodeURIComponent(smsMessage)}`,
+                        {
+                          method: 'POST',
+                          headers: { 'accept': 'application/json' },
+                          body
+                        }
+                      );
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                      alert(`SMS sent successfully! Total sent: ${data.summary?.total_sent || 0}`);
+                    } else {
+                      alert(`Failed to send SMS: ${data.message || 'Unknown error'}`);
+                    }
+                  } catch (err) {
+                    alert('Error sending SMS. Please try again.');
+                  }
                   setIsSendingSms(false)
                   setSmsMessage('')
                   setCustomNumbers('')
