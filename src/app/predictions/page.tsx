@@ -287,7 +287,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
   }
 
   const renderVIPCard = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
-    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
+    const vipData = (VIP_MATCHES_DATA as any)[vipType] || (fallbackVIPData as any)[vipType]
     if (!vipData) return null
     const isPurchased = purchasedPackages.includes(vipData.name)
     const isResultsUpdated = vipResultsUpdated[vipType] || vipData.isResultsUpdated

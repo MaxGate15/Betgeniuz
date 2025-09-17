@@ -40,7 +40,7 @@ export default function VIP() {
       name: 'VIP 2', 
       price: 'GHS 100',
       matches: [
-        { id: '4', homeTeam: 'PSG', awayTeam: 'Bayern Munich', option: 'Home', odds: '2.10', result: 'pending' },
+        { id: '4', homeTeam: 'Real Sociedad', awayTeam: 'Valencia', option: 'Home', odds: '1.80', result: 'pending' },
         { id: '5', homeTeam: 'Juventus', awayTeam: 'AC Milan', option: 'Under 3.5', odds: '1.75', result: 'pending' }
       ]
     },
@@ -192,7 +192,7 @@ export default function VIP() {
   }
 
   const renderVIPCard = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
-    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
+    const vipData = (VIP_MATCHES_DATA as any)[vipType] || (fallbackVIPData as any)[vipType]
     
     // Handle loading state or missing data
     if (!vipData || !vipData.matches) {
@@ -259,7 +259,7 @@ export default function VIP() {
                           </button>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Football.com:</span>
+                         
                     <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
                       {bookingCodes.football}
                           </button>
