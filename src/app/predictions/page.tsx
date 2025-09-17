@@ -263,7 +263,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
   }
 
   const renderMatchResult = (match: any, vipType: string) => {
-    const vipData = VIP_MATCHES_DATA[vipType] || fallbackVIPData[vipType]
+  const vipData = (VIP_MATCHES_DATA as any)[vipType] || (fallbackVIPData as any)[vipType]
     const isResultsUpdated = vipResultsUpdated[vipType] || vipData.isResultsUpdated
     if (!isResultsUpdated) return null
 
