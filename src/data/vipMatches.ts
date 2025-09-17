@@ -12,6 +12,7 @@ export interface VIPPackage {
   name: string
   price: string
   matches: MatchResult[]
+  category: string
   isResultsUpdated: boolean
   isSoldOut: boolean
   bookingCodes: {
@@ -23,31 +24,37 @@ export interface VIPPackage {
 
 // Fetch and transform API data to VIPPackage structure
 const fetchVIPMatches = async (): Promise<Record<string, VIPPackage>> => {
-  const res = await fetch('https://api.betgeniuz.com/games/vip-list')
+  const res = await fetch('https://api.betgeniuz.com/games/list-vip-slips')
   const data = await res.json()
+  console.log('Raw VIP Matches Data:', data)
   const result: Record<string, VIPPackage> = {}
 
   data.forEach((item: any) => {
+    if (!item || !item.booking || typeof item.booking.category === 'undefined') {
+      console.warn('Skipping item with missing booking/category:', item)
+      return
+    }
     const cat = item.booking.category
     result[cat] = {
       id: cat,
       name: cat.toUpperCase(),
+      category: cat,
       price: `GHS ${item.booking.price}`,
       isResultsUpdated: !!item.booking.updated,
       isSoldOut: !!item.booking.sold_out,
-      matches: item.games.map((g: any) => ({
+      matches: Array.isArray(item.games) ? item.games.map((g: any) => ({
         id: `${cat}-match${g.id}`,
         homeTeam: g.home_team,
         awayTeam: g.away_team,
         option: g.prediction,
-        odds: g.odds.toString(),
+        odds: g.odds?.toString() || '',
         result:
           g.match_status === 'won'
             ? 'win'
             : g.match_status === 'lost'
             ? 'loss'
             : 'pending'
-      })),
+      })) : [],
       bookingCodes: {
         sporty: item.booking.share_code || '',
         msport: item.booking.share_code || '',
@@ -55,7 +62,7 @@ const fetchVIPMatches = async (): Promise<Record<string, VIPPackage>> => {
       }
     }
   })
-
+  console.log('Fetched VIP Matches:', result)
   return result
 }
 
