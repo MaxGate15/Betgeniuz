@@ -352,9 +352,8 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
                 </div>
               </div>
             ) : (
-              <div className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                Results Available - Purchase to View Booking Codes
-              </div>
+              <>
+              </>
             )
           ) : (
             // When results are not updated, show buy button
