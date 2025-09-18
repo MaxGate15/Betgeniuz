@@ -189,7 +189,7 @@ export default function VIP() {
         amount: price * 0.01,
         currency: 'GHS',
         ref: reference,
-        callback: function(response) {
+  callback: function(response: any) {
           // Send to backend for verification
           fetch('https://api.betgeniuz.com/payment/verify', {
             method: 'POST',
