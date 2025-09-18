@@ -170,7 +170,8 @@ export default function VIP() {
 
     // Get price and booking_id
     const vipPackage = adminVipPackages[vipType] || VIP_PACKAGES[vipType]
-    const price = Number(vipPackage.amount || vipPackage.price?.replace(/\D/g, '')) || 0
+    // Use only amount, as price does not exist on this type
+    const price = Number(vipPackage.amount) || 0
     const booking_id = vipType
     const reference = generateReference()
     const email = getUserEmail()
