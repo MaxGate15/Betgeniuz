@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Script from 'next/script'
 import Navbar from '@/components/Navbar'
 import { PaymentModal } from '@/components/PaymentModal'
 import { LocationModal } from '@/components/LocationModal'
@@ -196,6 +197,98 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
     } catch {}
   }, [])
 
+  // Paystack Inline Payment Integration (mirror VIP page)
+  const [paystackLoading, setPaystackLoading] = useState(false)
+  const [paystackError, setPaystackError] = useState('')
+  const [paystackSuccess, setPaystackSuccess] = useState('')
+
+  // Helper: Generate unique transaction reference
+  function generateReference() {
+    return 'VIP_' + Date.now() + '_' + Math.floor(Math.random() * 1000000)
+  }
+
+  // Helper: Get user email (from localStorage or prompt)
+  function getUserEmail() {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('userData')
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData)
+          if (parsed.email) return parsed.email
+        } catch {}
+      }
+    }
+    return prompt('Enter your email for payment:') || ''
+  }
+
+  // Inline Paystack handler for predictions (mirrors VIP)
+  const handleBuyNowInline = async (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
+    if (!isLoggedIn) {
+      window.location.href = '/login'
+      return
+    }
+    if (vipSoldOut[vipType]) {
+      setSoldOutVipType(vipType)
+      setShowSoldOutPopup(true)
+      return
+    }
+
+    setPaystackError('')
+    setPaystackSuccess('')
+    setPaystackLoading(true)
+
+    const vipPackage = adminVipPackages[vipType] || VIP_PACKAGES[vipType]
+    const price = Number(vipPackage.amount) || 0
+    const booking_id = vipType
+    const reference = generateReference()
+    const email = getUserEmail()
+    if (!email) {
+      setPaystackError('Email is required for payment.')
+      setPaystackLoading(false)
+      return
+    }
+
+    if (typeof window !== 'undefined' && (window as any).PaystackPop) {
+      const handler = (window as any).PaystackPop.setup({
+        key: 'pk_live_af5bf9f11c13146bd6fd46dc0c25508f39e55a49',
+        email,
+        amount: price * 0.01,
+        currency: 'GHS',
+        ref: reference,
+        callback: function(response: any) {
+          fetch('https://api.betgeniuz.com/payment/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reference: response.reference, email, booking_id })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              setPaystackSuccess('Payment successful!')
+              // Persist purchased packages and redirect similar to VIP
+              try {
+                const prev = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
+                const next = Array.from(new Set([...(Array.isArray(prev) ? prev : []), vipPackage.name]))
+                localStorage.setItem('purchasedPackages', JSON.stringify(next))
+              } catch {}
+              window.location.href = '/dashboard?from=payment_success'
+            } else {
+              setPaystackError('Payment verification failed.')
+            }
+          })
+          .catch(() => setPaystackError('Payment verification failed.'))
+        },
+        onClose: function() {
+          setPaystackError('Transaction not completed.')
+        }
+      })
+      handler.openIframe()
+    } else {
+      setPaystackError('Paystack SDK not loaded.')
+    }
+    setPaystackLoading(false)
+  }
+
   // VIP logic handlers (copied from vip/page.tsx)
   const handleVipBuyNowClick = (vipType: 'vip1' | 'vip2' | 'vip3', cardIndex: number) => {
     if (!isLoggedIn) {
@@ -357,12 +450,19 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
             )
           ) : (
             // When results are not updated, show buy button
-            <button 
-              onClick={() => handleVipBuyNowClick(vipType, cardIndex)}
-              className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
-            >
-              Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
-            </button>
+            <>
+              <button 
+                onClick={() => handleBuyNowInline(vipType, cardIndex)}
+                className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors mb-2"
+              >
+                Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+              </button>
+              {/* Quick inline Paystack option */}
+              
+              {paystackLoading && <div className="text-yellow-600 mt-2">Processing payment...</div>}
+              {paystackError && <div className="text-red-600 mt-2">{paystackError}</div>}
+              {paystackSuccess && <div className="text-green-600 mt-2">{paystackSuccess}</div>}
+            </>
           )}
         </div>
 
