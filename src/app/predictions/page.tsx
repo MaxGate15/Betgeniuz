@@ -197,10 +197,24 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
     } catch {}
   }, [])
 
+  // Load user purchases when component mounts (or when user logs in)
+  useEffect(() => {
+    try {
+      const ud = typeof window !== 'undefined' ? localStorage.getItem('userData') : null
+      const email = ud ? (() => { try { return JSON.parse(ud).email } catch { return undefined } })() : undefined
+      fetchUserPurchases(email)
+    } catch {
+      fetchUserPurchases()
+    }
+  }, [])
+
   // Paystack Inline Payment Integration (mirror VIP page)
   const [paystackLoading, setPaystackLoading] = useState(false)
   const [paystackError, setPaystackError] = useState('')
   const [paystackSuccess, setPaystackSuccess] = useState('')
+  // User purchases flags from API
+  const [userPurchases, setUserPurchases] = useState<Record<string, boolean> | null>(null)
+  const [userPurchasesError, setUserPurchasesError] = useState('')
 
   // Helper: Generate unique transaction reference
   function generateReference() {
@@ -219,6 +233,39 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
       }
     }
     return prompt('Enter your email for payment:') || ''
+  }
+
+  // Fetch user purchases from backend for showing booking codes
+  const fetchUserPurchases = async (email?: string) => {
+    setUserPurchasesError('')
+    try {
+      let userEmail = email
+      if (!userEmail && typeof window !== 'undefined') {
+        const ud = localStorage.getItem('userData')
+        if (ud) {
+          try { userEmail = JSON.parse(ud).email } catch {}
+        }
+      }
+      if (!userEmail) {
+        setUserPurchases(null)
+        setUserPurchasesError('No user email available')
+        return
+      }
+
+      const res = await fetch(`https://api.betgeniuz.com/auth/user-purchases/${encodeURIComponent(userEmail)}`)
+      if (!res.ok) throw new Error('Failed to fetch user purchases')
+      const data = await res.json()
+      console.log('User purchases data:', data)
+      if (typeof data === 'object' && data !== null) {
+        setUserPurchases(data)
+      } else {
+        setUserPurchases(null)
+        setUserPurchasesError('Invalid purchases data')
+      }
+    } catch (err: any) {
+      setUserPurchases(null)
+      setUserPurchasesError(err?.message || 'Could not load user purchases')
+    }
   }
 
   // Inline Paystack handler for predictions (mirrors VIP)
@@ -330,6 +377,8 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
     setShowLocationModal(false)
     setShowNonGhanaModal(false)
     setActiveCardIndex(null)
+    // Refresh user purchases so booking codes show immediately
+    try { fetchUserPurchases() } catch {}
     window.location.href = '/dashboard?from=payment_success'
   }
 
@@ -417,8 +466,8 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
         {/* Action Section */}
         <div>
           {isResultsUpdated ? (
-            // When results are updated, show booking codes if purchased, otherwise show "Results Available"
-            isPurchased ? (
+            // When results are updated, show booking codes only if API says user purchased this VIP
+            (userPurchases ? userPurchases[vipType] === true : isPurchased) ? (
               <div className="space-y-2">
                 <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
                   ✓ Purchased — Booking Codes
@@ -450,6 +499,23 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
             )
           ) : (
             // When results are not updated, show buy button
+            (userPurchases ? userPurchases[vipType] === true : isPurchased) ? (
+              <div className="space-y-2">
+                <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                  ✓ Purchased — Booking Codes
+                </div>
+                <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Sporty:</span>
+                    <button onClick={() => navigator.clipboard.writeText((adminVipPackages[vipType] as any)?.bookingCodes?.sporty || vipData?.bookingCodes?.sporty)} className="text-[#191970] underline">
+                      {(adminVipPackages[vipType] as any)?.bookingCodes?.sporty || vipData?.bookingCodes?.sporty}
+                    </button>
+                  </div>
+                
+                  
+                </div>
+              </div>
+            ) :(
             <>
               <button 
                 onClick={() => handleBuyNowInline(vipType, cardIndex)}
@@ -462,7 +528,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
               {paystackLoading && <div className="text-yellow-600 mt-2">Processing payment...</div>}
               {paystackError && <div className="text-red-600 mt-2">{paystackError}</div>}
               {paystackSuccess && <div className="text-green-600 mt-2">{paystackSuccess}</div>}
-            </>
+            </>)
           )}
         </div>
 
@@ -758,6 +824,9 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
       {/* VIP Packages Section */}
       <section id="vip-packages" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
+          {userPurchasesError && (
+            <div className="text-center text-red-600 mb-4">{userPurchasesError}</div>
+          )}
           {vipLoading ? (
             <div className="text-xl font-semibold text-gray-800 text-center py-8">Loading VIP Packages...</div>
           ) : Object.keys(VIP_MATCHES_DATA).length > 0 ? (
