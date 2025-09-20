@@ -133,6 +133,50 @@ export default function VIP() {
   const [paystackError, setPaystackError] = useState('')
   const [paystackSuccess, setPaystackSuccess] = useState('')
 
+  const [userPurchases, setUserPurchases] = useState<Record<string, boolean> | null>(null)
+  const [userPurchasesError, setUserPurchasesError] = useState('')
+
+  const fetchUserPurchases = async (email?: string) => {
+    setUserPurchasesError('')
+    try {
+      let userEmail = email
+      if (!userEmail && typeof window !== 'undefined') {
+        const ud = localStorage.getItem('userData')
+        if (ud) {
+          try { userEmail = JSON.parse(ud).email } catch {}
+        }
+      }
+      if (!userEmail) {
+        setUserPurchases(null)
+        setUserPurchasesError('No user email available')
+        return
+      }
+
+      const res = await fetch(`https://api.betgeniuz.com/auth/user-purchases/${encodeURIComponent(userEmail)}`)
+      if (!res.ok) throw new Error('Failed to fetch user purchases')
+      const data = await res.json()
+      console.log('User purchases data:', data)
+      if (typeof data === 'object' && data !== null) {
+        setUserPurchases(data)
+      } else {
+        setUserPurchases(null)
+        setUserPurchasesError('Invalid purchases data')
+      }
+    } catch (err: any) {
+      setUserPurchases(null)
+      setUserPurchasesError(err?.message || 'Could not load user purchases')
+    }
+  }
+  useEffect(() => {
+    try {
+      const ud = typeof window !== 'undefined' ? localStorage.getItem('userData') : null
+      const email = ud ? (() => { try { return JSON.parse(ud).email } catch { return undefined } })() : undefined
+      fetchUserPurchases(email)
+    } catch {
+      fetchUserPurchases()
+    }
+  }, [])
+
   // Helper: Generate unique transaction reference
   function generateReference() {
     return 'VIP_' + Date.now() + '_' + Math.floor(Math.random() * 1000000)
@@ -345,6 +389,23 @@ export default function VIP() {
               <></>
             )
           ) : (
+            (userPurchases ? userPurchases[vipType] === true : isPurchased) ? (
+              <div className="space-y-2">
+                <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                  ✓ Purchased — Booking Codes
+                </div>
+                <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Sporty:</span>
+                    <button onClick={() => navigator.clipboard.writeText((adminVipPackages[vipType] as any)?.bookingCodes?.sporty || vipData?.bookingCodes?.sporty)} className="text-[#191970] underline">
+                      {(adminVipPackages[vipType] as any)?.bookingCodes?.sporty || vipData?.bookingCodes?.sporty}
+                    </button>
+                  </div>
+                
+                  
+                </div>
+              </div>
+            ) :(
             <button
               onClick={() => handleBuyNowClick(vipType, cardIndex)}
               className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
@@ -353,7 +414,7 @@ export default function VIP() {
             >
               Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
             </button>
-          )}
+          ))}
         </div>
         {/* Paystack Feedback */}
         {paystackLoading && <div className="text-yellow-600 mt-2">Processing payment...</div>}
