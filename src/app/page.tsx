@@ -114,7 +114,7 @@ export default function Home() {
               Join VIP
             </button>
             <button
-              onClick={() => handleButtonClick('/vip')}
+              onClick={() => window.open('https://t.me/Ozopgh', '_blank')}
               className="bg-white text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg border-2 border-[#f59e0b]"
             >
               Join Telegram
