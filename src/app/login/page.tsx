@@ -80,12 +80,12 @@ export default function Login() {
     setApiLoading(true)
     if (isLogin) {
       // Admin login shortcut
-      if (formData.email === 'admin' && formData.password === 'admin123') {
-        localStorage.setItem('adminLoggedIn', 'true')
-        window.location.href = '/admindashboard'
-        setApiLoading(false)
-        return
-      }
+      // if (formData.email === 'admin' && formData.password === 'admin123') {
+      //   localStorage.setItem('adminLoggedIn', 'true')
+      //   window.location.href = '/admindashboard'
+      //   setApiLoading(false)
+      //   return
+      // }
       // API login
       try {
         const res = await fetch('https://api.betgeniuz.com/auth/login', {

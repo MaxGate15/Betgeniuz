@@ -230,7 +230,7 @@ export default function VIP() {
       const handler = window.PaystackPop.setup({
         key:  'pk_live_af5bf9f11c13146bd6fd46dc0c25508f39e55a49',
         email,
-        amount: price * 0.01,
+        amount: price * 10,
         currency: 'GHS',
         ref: reference,
   callback: function(response: any) {
@@ -324,7 +324,7 @@ export default function VIP() {
       return (
         <div className="relative text-center bg-gray-50 rounded-lg p-3">
           <div className="text-gray-500">Loading...</div>
-        </div>
+                  </div>
       )
     }
     const isPurchased = purchasedPackages.includes(vipData.name)
@@ -333,7 +333,7 @@ export default function VIP() {
     const bookingCodes = adminBookingCodes[vipType]
 
     return (
-      <div className="relative text-center bg-gray-50 rounded-lg p-3">
+            <div className="relative text-center bg-gray-50 rounded-lg p-3">
         {/* VIP Package Name */}
         <div className="text-lg font-bold text-gray-800 mb-3">{vipData.name}</div>
         {/* Matches Section */}
@@ -346,45 +346,45 @@ export default function VIP() {
                   <div className="mt-2">
                     <div className="text-xs text-gray-600 mb-1">
                       <span className="font-medium">Prediction:</span> {match.prediction || match.option || 'N/A'}
-                    </div>
+                        </div>
                     <div className="text-xs text-gray-600 mb-2">
                       <span className="font-medium">Odds:</span> {match.odds || 'N/A'}
-                    </div>
+                        </div>
                     {renderMatchResult(match, vipType)}
-                  </div>
+                </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+              </div>
         {/* Action Section */}
-        <div>
+                <div>
           {isResultsUpdated ? (
             isPurchased ? (
-              <div className="space-y-2">
-                <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
-                  ✓ Purchased — Booking Codes
-                </div>
-                <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Sporty:</span>
+                    <div className="space-y-2">
+                      <div className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold text-center">
+                        ✓ Purchased — Booking Codes
+                      </div>
+                      <div className="bg-white rounded-lg p-3 text-gray-800 text-left">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Sporty:</span>
                     <button onClick={() => navigator.clipboard.writeText(bookingCodes.sporty)} className="text-[#191970] underline">
                       {bookingCodes.sporty}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">MSport:</span>
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">MSport:</span>
                     <button onClick={() => navigator.clipboard.writeText(bookingCodes.msport)} className="text-[#191970] underline">
                       {bookingCodes.msport}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
                     <button onClick={() => navigator.clipboard.writeText(bookingCodes.football)} className="text-[#191970] underline">
                       {bookingCodes.football}
-                    </button>
-                  </div>
-                </div>
-              </div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
             ) : (
               <></>
             )
@@ -406,21 +406,21 @@ export default function VIP() {
                 </div>
               </div>
             ) :(
-            <button
+                    <button 
               onClick={() => handleBuyNowClick(vipType, cardIndex)}
-              className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                      className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors"
               data-price={vipData.price}
               data-booking_id={vipType}
-            >
+                    >
               Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
-            </button>
+                    </button>
           ))}
-        </div>
+                </div>
         {/* Paystack Feedback */}
         {paystackLoading && <div className="text-yellow-600 mt-2">Processing payment...</div>}
         {paystackError && <div className="text-red-600 mt-2">{paystackError}</div>}
         {paystackSuccess && <div className="text-green-600 mt-2">{paystackSuccess}</div>}
-      </div>
+            </div>
     )
   }
 
@@ -445,15 +445,15 @@ export default function VIP() {
             <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
               VIP
             </h1>
-          </div>
-        </div>
+                      </div>
+                    </div>
       </section>
       {/* VIP Packages Section */}
       <section id="vip-packages" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           {Object.keys(VIP_MATCHES_DATA).length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8 items-start">
-              {Object.keys(VIP_MATCHES_DATA).map((vipType, index) =>
+              {Object.keys(VIP_MATCHES_DATA).map((vipType, index) => 
                 renderVIPCard(vipType as 'vip1' | 'vip2' | 'vip3', index)
               )}
             </div>
@@ -477,7 +477,7 @@ export default function VIP() {
           <div className="bg-white rounded-lg border-2 border-red-500 p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-red-600 uppercase text-center flex-1">Package Sold Out</h3>
-              <button
+              <button 
                 onClick={() => setShowSoldOutPopup(false)}
                 className="text-black hover:text-gray-600 text-xl font-bold"
               >
