@@ -657,17 +657,17 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-[#191970] text-white">
       {/* Header */}
-      <header className="bg-[#191970] border-b border-indigo-400 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-white">BetGeniuz Admin</h1>
-            <span className="text-indigo-200 text-sm">Control Panel</span>
+      <header className="bg-[#191970] border-b border-indigo-400 px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">BetGeniuz Admin</h1>
+            <span className="text-indigo-200 text-xs sm:text-sm">Control Panel</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-indigo-200">Admin User</span>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <span className="text-indigo-200 text-xs sm:text-sm">Admin User</span>
             <button 
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+              className="bg-red-600 hover:bg-red-700 px-3 py-2 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm"
             >
               Logout
             </button>
@@ -675,14 +675,14 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-[#2e2e8f] p-1 rounded-lg mb-8">
+        <div className="flex flex-wrap gap-1 bg-[#2e2e8f] p-1 rounded-lg mb-4 sm:mb-6 lg:mb-8">
           {['dashboard', 'games', 'gamescontrol', 'users', 'notifications', 'sms', 'settings'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded-md transition-colors capitalize ${
+              className={`px-2 py-2 sm:px-3 sm:py-2 lg:px-4 lg:py-3 rounded-md transition-colors capitalize text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === tab
                   ? 'bg-[#f59e0b] text-white'
                   : 'text-indigo-200 hover:text-white'
@@ -695,17 +695,17 @@ export default function AdminDashboard() {
 
         {/* Dashboard Overview Tab */}
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
+            <div className="bg-white text-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
               <div className="flex items-center">
                 <div className="p-2 rounded-full bg-blue-100 text-blue-600">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                 </div>
-                <div className="ml-3">
+                <div className="ml-2 sm:ml-3">
                   <p className="text-xs font-medium text-gray-600">Total Users</p>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
                     {totalUsersLoading ? 'Loading...' : totalUsersError ? 'Error' : totalUsers !== null ? totalUsers : '--'}
                   </p>
                 </div>
@@ -713,30 +713,30 @@ export default function AdminDashboard() {
             </div>
 
 
-             <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg">
+             <div className="bg-white text-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
                <div className="flex items-center">
                  <div className="p-2 rounded-full bg-purple-100 text-purple-600">
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                    </svg>
                  </div>
-                 <div className="ml-3">
+                 <div className="ml-2 sm:ml-3">
                    <p className="text-xs font-medium text-gray-600">VIP Packages Available</p>
-                   <p className="text-lg font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/3</p>
+                   <p className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">{vipPackages.filter(p => p.available).length}/3</p>
                  </div>
                </div>
              </div>
 
-                         <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg">
+                         <div className="bg-white text-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
                <div className="flex items-center">
                  <div className="p-2 rounded-full bg-red-100 text-red-600">
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                    </svg>
                  </div>
-                 <div className="ml-3">
+                 <div className="ml-2 sm:ml-3">
                    <p className="text-xs font-medium text-gray-600">Unread Notifications</p>
-                   <p className="text-lg font-semibold text-gray-900">
+                   <p className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
                      {unreadCountLoading
                        ? 'Loading...'
                        : unreadCountError
@@ -764,7 +764,7 @@ export default function AdminDashboard() {
                      setActiveFilter('all')
                      setSelectedSlip(null)
                    }}
-                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                   className={`px-3 py-2 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
                      activeFilter === 'all' 
                        ? 'bg-[#f59e0b] text-white' 
                        : 'bg-gray-600 hover:bg-gray-700 text-white'
@@ -778,7 +778,7 @@ export default function AdminDashboard() {
                      setActiveFilter('free')
                      setLoadInput('')
                    }}
-                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                   className={`px-3 py-2 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
                      activeFilter === 'free' 
                        ? 'bg-[#f59e0b] text-white' 
                        : 'bg-gray-600 hover:bg-gray-700 text-white'
@@ -792,7 +792,7 @@ export default function AdminDashboard() {
                      setActiveFilter('vip1')
                      setLoadInput('')
                    }}
-                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                   className={`px-3 py-2 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
                      activeFilter === 'vip1' 
                        ? 'bg-[#f59e0b] text-white' 
                        : 'bg-gray-600 hover:bg-gray-700 text-white'
@@ -806,7 +806,7 @@ export default function AdminDashboard() {
                      setActiveFilter('vip2')
                      setLoadInput('')
                    }}
-                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                   className={`px-3 py-2 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
                      activeFilter === 'vip2' 
                        ? 'bg-[#f59e0b] text-white' 
                        : 'bg-gray-600 hover:bg-gray-700 text-white'
@@ -820,7 +820,7 @@ export default function AdminDashboard() {
                      setActiveFilter('vip3')
                      setLoadInput('')
                    }}
-                   className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                   className={`px-3 py-2 sm:px-4 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
                      activeFilter === 'vip3' 
                        ? 'bg-[#f59e0b] text-white' 
                        : 'bg-gray-600 hover:bg-gray-700 text-white'
@@ -834,7 +834,7 @@ export default function AdminDashboard() {
             {/* Slips Display - Only show when "Slips" is selected */}
             {activeFilter === 'all' && (
               <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200">
                   <div className="flex justify-between items-center">
                     <div>
                   <h2 className="text-xl font-bold">Uploaded Slips</h2>
@@ -842,11 +842,11 @@ export default function AdminDashboard() {
                         {isSelectMode ? 'Select slips to hide from view' : 'Click on a slip to view and edit games'}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 sm:space-x-2">
                       {uploadedSlips.length > 0 && !isSelectMode && (
                         <button
                           onClick={toggleSelectMode}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                          className="px-3 py-2 sm:px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs sm:text-sm font-medium"
                           title="Select slips to hide"
                         >
                           Select Mode
@@ -869,7 +869,7 @@ export default function AdminDashboard() {
                           <button
                             onClick={deleteSelectedSlips}
                             disabled={selectedSlips.size === 0}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            className="px-3 py-2 sm:px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                           >
                             Hide Selected ({selectedSlips.size})
                           </button>
@@ -904,13 +904,13 @@ export default function AdminDashboard() {
                 </div>
                 
                 {slipsLoading ? (
-                  <div className="px-6 py-8 text-center text-gray-500">Loading slips...</div>
+                  <div className="px-3 sm:px-4 lg:px-6 py-6 sm:py-8 text-center text-gray-500">Loading slips...</div>
                 ) : slipsError ? (
-                  <div className="px-6 py-8 text-center text-red-500">
+                  <div className="px-3 sm:px-4 lg:px-6 py-6 sm:py-8 text-center text-red-500">
                     <strong>Error loading slips:</strong> {slipsError}
                   </div>
                 ) : uploadedSlips.length === 0 ? (
-                  <div className="px-6 py-8 text-center text-gray-500">
+                  <div className="px-3 sm:px-4 lg:px-6 py-6 sm:py-8 text-center text-gray-500">
                     No slips uploaded yet. Load games and click "Upload" to create slips.
                   </div>
                 ) : (
@@ -925,7 +925,7 @@ export default function AdminDashboard() {
                         <div key={slipId}>
                           {/* Slip Header */}
                           <div
-                            className={`px-6 py-4 hover:bg-gray-50 transition-colors ${
+                            className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors ${
                               isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                             } ${isSelectMode ? 'cursor-default' : 'cursor-pointer'}`}
                             onClick={() => {
@@ -935,7 +935,7 @@ export default function AdminDashboard() {
                             }}
                           >
                             <div className="flex justify-between items-center">
-                              <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2 sm:space-x-3">
                                 {isSelectMode && (
                                   <div className="flex items-center">
                                     <input
@@ -950,7 +950,7 @@ export default function AdminDashboard() {
                                   </div>
                                 )}
                                 <div>
-                                <h3 className="text-lg font-medium text-gray-900">
+                                <h3 className="text-sm sm:text-base lg:text-lg font-medium text-gray-900">
                                   {slip.category === 'free'
                                     ? 'Free Slip'
                                     : slip.category
@@ -978,7 +978,7 @@ export default function AdminDashboard() {
                                 </p>
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-1 sm:space-x-2">
                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                                   slip.status === 'updated'
                                     ? 'bg-green-100 text-green-800'
@@ -1012,16 +1012,16 @@ export default function AdminDashboard() {
                           {/* Slip Details - Show directly under the clicked slip */}
                           {isSelected && (
                             <div className="bg-gray-50 border-t border-gray-200">
-                              <div className="px-6 py-4">
+                              <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
                                 
                                 {/* Games in selected slip */}
                                 <div className="space-y-3">
                                   {(slip.games || slip.booking?.games || []).map((game: any, index: number) => (
                                     <div key={game.id || index} className="bg-white rounded-lg p-4 border border-gray-200">
                                       <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4 flex-1">
+                                        <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
                                           <div className="flex-1">
-                                            <div className="flex items-center space-x-2">
+                                            <div className="flex items-center space-x-1 sm:space-x-2">
                                               <div className="text-sm font-medium text-gray-900">
                                                 {(game.home_team && game.away_team)
                                                   ? `${game.home_team} vs ${game.away_team}`
@@ -1094,7 +1094,7 @@ export default function AdminDashboard() {
                                             <div className="text-sm font-medium text-gray-700">
                                               Update Result:
                                             </div>
-                                            <div className="flex items-center space-x-3">
+                                            <div className="flex items-center space-x-2 sm:space-x-3">
                                               {/* Correct Mark (Won) */}
                                               <button
                                                 onClick={async () => {
@@ -1115,7 +1115,7 @@ export default function AdminDashboard() {
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
-                                                className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
+                                                className="flex items-center space-x-1 sm:space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-2 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm"
                                               >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1142,7 +1142,7 @@ export default function AdminDashboard() {
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
-                                                className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
+                                                className="flex items-center space-x-1 sm:space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm"
                                               >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1169,7 +1169,7 @@ export default function AdminDashboard() {
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
-                                                className="flex items-center space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
+                                                className="flex items-center space-x-1 sm:space-x-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-2 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm"
                                               >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1219,7 +1219,7 @@ export default function AdminDashboard() {
             {/* Loaded Games Results - SportyBet Betting Slip Format */}
             {loadedGames.length > 0 && (
               <div className="bg-white text-gray-800 rounded-lg shadow-lg overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200">
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-xl font-bold">Loaded Games from SportyBet</h2>
@@ -1248,7 +1248,7 @@ export default function AdminDashboard() {
                 <div className="divide-y divide-gray-200">
                   {loadedGames.map((game: any, index: number) => (
                     <div key={game.id}>
-                      <div className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                      <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between hover:bg-gray-50">
                         <div className="flex items-center space-x-4 flex-1">
                           {/* Remove Button */}
                           <button
@@ -1262,7 +1262,7 @@ export default function AdminDashboard() {
                           
                           {/* Match Info */}
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1 sm:space-x-2">
                               <div className="text-sm font-medium text-gray-900">
                                 {game.homeTeam} vs {game.awayTeam}
                               </div>
@@ -1328,7 +1328,7 @@ export default function AdminDashboard() {
                                   )
                                   setLoadedGames(updatedLoadedGames)
                                 }}
-                                className="flex items-center space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg transition-colors"
+                                className="flex items-center space-x-1 sm:space-x-2 bg-green-100 hover:bg-green-200 text-green-800 px-2 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1344,7 +1344,7 @@ export default function AdminDashboard() {
                                   )
                                   setLoadedGames(updatedLoadedGames)
                                 }}
-                                className="flex items-center space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg transition-colors"
+                                className="flex items-center space-x-1 sm:space-x-2 bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
