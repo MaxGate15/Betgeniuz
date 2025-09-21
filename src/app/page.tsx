@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -83,18 +84,29 @@ export default function Home() {
       <Navbar onPredictionsClick={() => window.location.href = '/predictions'} />
       
       {/* Hero Section */}
-      <section 
-        className="relative py-32 px-4 pt-40 min-h-[100vh]"
-        style={{ 
-          backgroundImage: 'url("/hero-Betgeniuz%201%20(1).png")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        <div className="max-w-6xl mx-auto text-center h-full flex flex-col justify-end pb-32">
-          {/* Buttons positioned in lower-right area near player's foot */}
-          <div className="absolute bottom-8 right-1/2 transform translate-x-1/2 flex flex-col sm:flex-row gap-3">
+      <section className="relative h-[60vh] sm:h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* Mobile gradient overlay */}
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-blue-900 to-black sm:hidden z-0" />
+        
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/hero-Betgeniuz%201%20(1).png"
+            alt="BetGeniuz Hero Background"
+            fill
+            sizes="(max-width: 768px) 100vw, 1200px"
+            priority
+            className="object-contain sm:object-cover object-center"
+          />
+        </div>
+        
+        {/* Content Overlay */}
+        <div className="absolute inset-0 bg-black/60 z-10" />
+        
+        {/* Content */}
+        <div className="relative z-20 flex flex-col items-center w-full px-4 sm:px-0 h-full">
+          {/* Buttons fixed at bottom center */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col sm:flex-row gap-3">
             <button 
               onClick={() => handleButtonClick('/vip')}
               className="bg-[#f59e0b] hover:bg-[#d97706] text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg"
@@ -102,7 +114,7 @@ export default function Home() {
               Join VIP
             </button>
             <button
-              onClick={() => handleButtonClick('/vvip')}
+              onClick={() => handleButtonClick('/vip')}
               className="bg-white text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white px-6 py-3 rounded-lg text-base font-semibold transition-colors shadow-lg border-2 border-[#f59e0b]"
             >
               Join Telegram
@@ -335,30 +347,43 @@ export default function Home() {
       </section>
 
       {/* Winning Team Section */}
-      <section 
-        className="py-16 px-4 relative"
-        style={{ 
-          backgroundImage: 'url("/F-Betgeniuz 1 (2).png")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#f59e0b] mb-6 uppercase">
-            BetGeniuz
-          </h2>
-          <p className="text-xl text-white max-w-3xl mx-auto leading-relaxed mb-8">
-            Join the winning team today and discover accurate high and low-risk predictions designed to enhance your success. Don't wait be part of our next big win and unlock countless opportunities to stay ahead in the game!
-          </p>
-          
-          {/* Get Started Button */}
-          <button 
-            onClick={() => handleButtonClick('/vvip')}
-            className="inline-block bg-[#f59e0b] hover:bg-[#d97706] text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            Get Started
-          </button>
+      <section className="relative h-[60vh] sm:h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* Mobile gradient overlay */}
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-blue-900 to-black sm:hidden z-0" />
+        
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/F-Betgeniuz 1 (2).png"
+            alt="BetGeniuz Footer Background"
+            fill
+            sizes="(max-width: 768px) 100vw, 1200px"
+            priority
+            className="object-contain sm:object-cover object-center"
+          />
+        </div>
+        
+        {/* Content Overlay */}
+        <div className="absolute inset-0 bg-black/60 z-10" />
+        
+        {/* Content */}
+        <div className="relative z-20 flex flex-col items-center w-full px-4 sm:px-0">
+          <div className="max-w-6xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#f59e0b] mb-6 uppercase">
+              BetGeniuz
+            </h2>
+            <p className="text-xl text-white max-w-3xl mx-auto leading-relaxed mb-8">
+              Join the winning team today and discover accurate high and low-risk predictions designed to enhance your success. Don't wait be part of our next big win and unlock countless opportunities to stay ahead in the game!
+            </p>
+            
+            {/* Get Started Button */}
+            <button 
+              onClick={() => handleButtonClick('/vip')}
+              className="inline-block bg-[#f59e0b] hover:bg-[#d97706] text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              Get Started
+            </button>
+          </div>
         </div>
       </section>
 

@@ -48,7 +48,7 @@ export default function Dashboard() {
             {/* Active Subscription Card */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Active Subscription</h3>
-              <div className="text-3xl font-bold text-red-600 mb-1">VVIP</div>
+              <div className="text-3xl font-bold text-red-600 mb-1">VIP</div>
               <p className="text-sm text-gray-500">Valid until: Sep 7, 2025</p>
                 </div>
                 

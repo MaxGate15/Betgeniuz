@@ -556,46 +556,30 @@ export default function AdminDashboard() {
         console.error('Update error:', errText);
         return;
       }
-      
-      // Find the slip to check if all games are now updated
-      const currentSlip = uploadedSlips.find(slip => slip.id === bookingId);
-      if (!currentSlip) return;
-      
-      // Update games with new results
-      const updatedGames = currentSlip.games.map((g: any) => {
-        const found = games.find(upd => upd.game_id === g.id);
-        return found ? { ...g, result: found.status } : g;
-      });
-      
-      // Check if all games in the slip have been updated (have a result other than 'pending')
-      const allGamesUpdated = updatedGames.every((game: any) => 
-        game.result && game.result !== 'pending'
-      );
-      
       // Update local state for uploadedSlips and selectedSlip
       setUploadedSlips(prev => prev.map(slip => {
         if (slip.id !== bookingId) return slip;
         return {
           ...slip,
-          status: allGamesUpdated ? 'updated' : slip.status, // Only mark as updated if all games are done
-          games: updatedGames
+          status: 'updated', // Mark slip as updated
+          games: slip.games.map((g: any) => {
+            const found = games.find(upd => upd.game_id === g.id);
+            return found ? { ...g, result: found.status } : g;
+          })
         };
       }));
-      
       if (selectedSlip && selectedSlip.id === bookingId) {
         setSelectedSlip((prev: any) => ({
           ...prev,
-          status: allGamesUpdated ? 'updated' : prev.status, // Only mark as updated if all games are done
-          games: updatedGames
+          status: 'updated', // Mark slip as updated
+          games: prev.games.map((g: any) => {
+            const found = games.find(upd => upd.game_id === g.id);
+            return found ? { ...g, result: found.status } : g;
+          })
         }));
       }
-      
-      // Show success notification
-      if (allGamesUpdated) {
-        alert('All games updated! Slip marked as completed.');
-      } else {
-        alert('Game status updated successfully!');
-      }
+      // Optionally show a success notification
+      alert('Game statuses updated successfully!');
     } catch (err) {
       alert('Failed to update game statuses. See console for details.');
       console.error('Update error:', err);
@@ -1117,21 +1101,17 @@ export default function AdminDashboard() {
                                                   await updateGamesStatus(slip.id, [
                                                     { game_id: game.id, status: 'won' }
                                                   ]);
-                                                  const updatedSlips = uploadedSlips.map((s: any) => {
-                                                    if (s.id !== slip.id) return s;
-                                                    const updatedGames = s.games.map((g: any) =>
-                                                      g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
-                                                    );
-                                                    // Check if all games are now updated
-                                                    const allGamesUpdated = updatedGames.every((g: any) => 
-                                                      g.result && g.result !== 'pending'
-                                                    );
-                                                    return {
-                                                      ...s,
-                                                      status: allGamesUpdated ? 'updated' : s.status,
-                                                      games: updatedGames
-                                                    };
-                                                  });
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          status: 'updated', // Mark slip as updated
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, result: 'won', isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
@@ -1148,21 +1128,17 @@ export default function AdminDashboard() {
                                                   await updateGamesStatus(slip.id, [
                                                     { game_id: game.id, status: 'lost' }
                                                   ]);
-                                                  const updatedSlips = uploadedSlips.map((s: any) => {
-                                                    if (s.id !== slip.id) return s;
-                                                    const updatedGames = s.games.map((g: any) =>
-                                                      g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
-                                                    );
-                                                    // Check if all games are now updated
-                                                    const allGamesUpdated = updatedGames.every((g: any) => 
-                                                      g.result && g.result !== 'pending'
-                                                    );
-                                                    return {
-                                                      ...s,
-                                                      status: allGamesUpdated ? 'updated' : s.status,
-                                                      games: updatedGames
-                                                    };
-                                                  });
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          status: 'updated', // Mark slip as updated
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, result: 'lost', isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
@@ -1179,21 +1155,17 @@ export default function AdminDashboard() {
                                                   await updateGamesStatus(slip.id, [
                                                     { game_id: game.id, status: 'pending' }
                                                   ]);
-                                                  const updatedSlips = uploadedSlips.map((s: any) => {
-                                                    if (s.id !== slip.id) return s;
-                                                    const updatedGames = s.games.map((g: any) =>
-                                                      g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
-                                                    );
-                                                    // Check if all games are now updated
-                                                    const allGamesUpdated = updatedGames.every((g: any) => 
-                                                      g.result && g.result !== 'pending'
-                                                    );
-                                                    return {
-                                                      ...s,
-                                                      status: allGamesUpdated ? 'updated' : s.status,
-                                                      games: updatedGames
-                                                    };
-                                                  });
+                                                  const updatedSlips = uploadedSlips.map((s: any) =>
+                                                    s.id === slip.id
+                                                      ? {
+                                                          ...s,
+                                                          status: 'updated', // Mark slip as updated
+                                                          games: s.games.map((g: any) =>
+                                                            g.id === game.id ? { ...g, result: 'pending', isEditing: false } : g
+                                                          )
+                                                        }
+                                                      : s
+                                                  );
                                                   setUploadedSlips(updatedSlips);
                                                   setSelectedSlip(updatedSlips.find((s: any) => s.id === slip.id));
                                                 }}
