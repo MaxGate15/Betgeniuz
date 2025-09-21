@@ -230,7 +230,7 @@ export default function VIP() {
       const handler = window.PaystackPop.setup({
         key:  'pk_live_af5bf9f11c13146bd6fd46dc0c25508f39e55a49',
         email,
-        amount: price * 0.01,
+        amount: price * 10,
         currency: 'GHS',
         ref: reference,
   callback: function(response: any) {
