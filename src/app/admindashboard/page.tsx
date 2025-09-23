@@ -241,7 +241,13 @@ export default function AdminDashboard() {
   // Check authentication on component mount
   useEffect(() => {
     const isAdminLoggedIn = localStorage.getItem('adminLoggedIn')
-    if (!isAdminLoggedIn) {
+    const isUserAdmin = localStorage.getItem('is_admin')
+    const isLoggedIn = localStorage.getItem('accessToken') // Check if user is logged in
+    
+    // Allow access if either:
+    // 1. Admin is logged in via admin login page, OR
+    // 2. Regular user is logged in AND has admin privileges
+    if (!isAdminLoggedIn && !(isLoggedIn && (isUserAdmin === 'true' || isUserAdmin === '1'))) {
       router.push('/')
     }
   }, [router])
@@ -301,8 +307,19 @@ export default function AdminDashboard() {
   }
 
   const handleLogout = () => {
+    // Remove admin session tokens
     localStorage.removeItem('adminLoggedIn')
-    router.push('/')
+    
+    // If user is logged in as regular user with admin privileges, 
+    // redirect to regular dashboard instead of completely logging out
+    const isUserAdmin = localStorage.getItem('is_admin')
+    const isLoggedIn = localStorage.getItem('accessToken')
+    
+    if (isLoggedIn && (isUserAdmin === 'true' || isUserAdmin === '1')) {
+      router.push('/dashboard')
+    } else {
+      router.push('/')
+    }
   }
 
   const markNotificationRead = async (id: number) => {

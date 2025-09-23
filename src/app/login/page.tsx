@@ -104,12 +104,14 @@ export default function Login() {
           localStorage.setItem('userLoggedIn', 'true')
           localStorage.setItem('userData', JSON.stringify(data))
           localStorage.setItem('accessToken', data.access_token)
-          if (data.is_admin === 1 || data.is_admin === true) {
-            localStorage.setItem('adminLoggedIn', 'true')
-            window.location.href = '/admindashboard'
-          } else {
-            window.location.href = '/'
-          }
+          localStorage.setItem("is_admin", data.is_admin )
+          // if (data.is_admin === 1 || data.is_admin === true) {
+          //   localStorage.setItem('adminLoggedIn', 'true')
+          //   window.location.href = '/admindashboard'
+          // } else {
+          //   window.location.href = '/'
+          // }
+          window.location.href = '/'
         }
       } catch (err) {
         setApiError('Network error. Please try again.')

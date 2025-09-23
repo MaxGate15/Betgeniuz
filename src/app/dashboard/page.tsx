@@ -4,15 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { VIP_PACKAGES } from '@/config/paystack';
 import Navbar from '@/components/Navbar';
-import { fetchVIPMatches, fetchVIPResultsUpdated } from '@/data/vipMatches';
 
 export default function Dashboard() {
   const { userData, isLoggedIn, isLoading } = useAuth();
   const [purchased, setPurchased] = useState<string[]>([])
-  const [vipMatchesData, setVipMatchesData] = useState<any>({})
-  const [vipResultsUpdated, setVipResultsUpdated] = useState<any>({})
-  const [loading, setLoading] = useState(true)
-  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -23,119 +18,9 @@ export default function Dashboard() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('purchasedPackages') || '[]')
-      if (Array.isArray(saved)) {
-        setPurchased(saved)
-      } else {
-        // Add some sample data for testing if no purchases exist
-        setPurchased(['VIP 1', 'VIP 2'])
-      }
-    } catch {
-      // Add some sample data for testing
-      setPurchased(['VIP 1', 'VIP 2'])
-    }
+      if (Array.isArray(saved)) setPurchased(saved)
+    } catch {}
   }, [])
-
-  // Fetch VIP matches data
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const [matches, resultsUpdated] = await Promise.all([
-          fetchVIPMatches(),
-          fetchVIPResultsUpdated()
-        ])
-        setVipMatchesData(matches)
-        setVipResultsUpdated(resultsUpdated)
-      } catch (error) {
-        console.error('Error fetching VIP data:', error)
-        // Add sample data for testing
-        setVipMatchesData({
-          vip1: {
-            name: 'VIP 1',
-            matches: [
-              { id: '1', homeTeam: 'Arsenal', awayTeam: 'Chelsea', option: 'Home', odds: '1.85', result: 'win' },
-              { id: '2', homeTeam: 'Manchester United', awayTeam: 'Liverpool', option: 'Over 2.5', odds: '2.15', result: 'pending' }
-            ],
-            isResultsUpdated: true
-          },
-          vip2: {
-            name: 'VIP 2',
-            matches: [
-              { id: '3', homeTeam: 'Barcelona', awayTeam: 'Real Madrid', option: 'Away', odds: '1.95', result: 'win' },
-              { id: '4', homeTeam: 'PSG', awayTeam: 'Bayern Munich', option: 'Draw', odds: '3.20', result: 'pending' }
-            ],
-            isResultsUpdated: false
-          }
-        })
-        setVipResultsUpdated({ vip1: true, vip2: false })
-      }
-      setLoading(false)
-    }
-    fetchData()
-  }, [])
-
-  // Helper function to get purchased games with details
-  const getPurchasedGames = () => {
-    const games = []
-    purchased.forEach((pkgName, index) => {
-      const vipType = Object.keys(VIP_PACKAGES).find(key => VIP_PACKAGES[key as keyof typeof VIP_PACKAGES].name === pkgName)
-      if (vipType && vipMatchesData[vipType]) {
-        const isResultsUpdated = vipResultsUpdated[vipType] || vipMatchesData[vipType].isResultsUpdated
-        games.push({
-          id: index,
-          packageName: pkgName,
-          vipType,
-          matches: vipMatchesData[vipType].matches || [],
-          isResultsUpdated,
-          bookingCodes: VIP_PACKAGES[vipType as keyof typeof VIP_PACKAGES].bookingCodes,
-          price: VIP_PACKAGES[vipType as keyof typeof VIP_PACKAGES].amount,
-          purchaseDate: new Date().toISOString().split('T')[0], // Mock date for now
-          status: isResultsUpdated ? 'Completed' : 'Active'
-        })
-      }
-    })
-    return games
-  }
-
-  // Toggle card expansion
-  const toggleCardExpansion = (cardId: number) => {
-    const newExpanded = new Set(expandedCards)
-    if (newExpanded.has(cardId)) {
-      newExpanded.delete(cardId)
-    } else {
-      newExpanded.add(cardId)
-    }
-    setExpandedCards(newExpanded)
-  }
-
-  // Helper function to render match result
-  const renderMatchResult = (match: any) => {
-    if (!match.result) return null
-    
-    return (
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex space-x-2">
-          <div className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
-            Option: {match.option || match.prediction || 'N/A'}
-          </div>
-          <div className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
-            Odds: {match.odds || 'N/A'}
-          </div>
-        </div>
-        <div className={`w-6 h-6 ${match.result === 'win' ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
-          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-            {match.result === 'win' ? (
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            ) : (
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            )}
-          </svg>
-        </div>
-      </div>
-    )
-  }
-
-  const purchasedGames = getPurchasedGames()
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -172,12 +57,9 @@ export default function Dashboard() {
               <h3 className="text-sm font-medium text-gray-600 mb-2">Predictions Used</h3>
               <div className="text-3xl font-bold text-red-600 mb-1">0</div>
               <p className="text-sm text-gray-500 mb-2">In The Last 30 days</p>
-              <button 
-                onClick={() => document.getElementById('games-purchased-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-sm text-blue-600 underline hover:text-blue-800"
-              >
-                Games Purchased: {purchasedGames.length}
-              </button>
+              <a href="#" className="text-sm text-blue-600 underline hover:text-blue-800">
+                Games Purchased: 0
+              </a>
                   </div>
 
             {/* Win Rate Card */}
@@ -189,162 +71,50 @@ export default function Dashboard() {
                 </div>
                 
           {/* Games Purchased */}
-          <div id="games-purchased-section" className="bg-white p-6 rounded-lg shadow-sm mt-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-6">Your Purchased Games</h3>
-            
-            {purchasedGames.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-6xl mb-4">⚽</div>
-                <p className="text-gray-500 text-lg">No purchases yet.</p>
-                <p className="text-gray-400 text-sm mt-2">Visit our VIP section to get started!</p>
-                <button 
-                  onClick={() => window.location.href = '/vip'}
-                  className="mt-4 bg-[#f59e0b] hover:bg-[#d97706] text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-                >
-                  Browse VIP Packages
-                </button>
-              </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Games Purchased</h3>
+            {purchased.length === 0 ? (
+              <p className="text-gray-500">No purchases yet.</p>
             ) : (
               <div className="space-y-4">
-                {purchasedGames.map((game) => (
-                  <div key={game.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                    {/* Card Header - Clickable */}
-                    <div 
-                      className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => toggleCardExpansion(game.id)}
-                    >
+                {purchased.map((pkg) => {
+                  const entry = Object.values(VIP_PACKAGES).find(p => p.name === pkg) as any
+                  return (
+                    <div key={pkg} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h4 className="text-lg font-semibold text-gray-800">{game.packageName}</h4>
-                            <span className="text-sm text-gray-500">({game.matches.length} games)</span>
-                          </div>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Purchased: {game.purchaseDate}
-                          </p>
+                        <div>
+                          <div className="font-semibold text-gray-800">{pkg}</div>
+                          <div className="text-sm text-gray-500">Booking Codes</div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-green-600">GHS {game.price}</div>
-                            <div className="flex items-center space-x-1">
-                              <span className="text-sm text-gray-500">+</span>
-                            </div>
+                        <div className="text-sm text-gray-700">
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Sporty:</span>
+                            <button onClick={() => navigator.clipboard.writeText(entry?.bookingCodes?.sporty)} className="text-blue-600 underline">
+                              {entry?.bookingCodes?.sporty || '-'}
+                            </button>
                           </div>
-                          <div className="flex flex-col items-end space-y-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              game.status === 'Active' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {game.status}
-                            </span>
-                            <svg 
-                              className={`w-5 h-5 text-gray-400 transition-transform ${
-                                expandedCards.has(game.id) ? 'rotate-180' : ''
-                              }`} 
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>MSport:</span>
+                            <button onClick={() => navigator.clipboard.writeText(entry?.bookingCodes?.msport)} className="text-blue-600 underline">
+                              {entry?.bookingCodes?.msport || '-'}
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Football.com:</span>
+                            <button onClick={() => navigator.clipboard.writeText(entry?.bookingCodes?.football)} className="text-blue-600 underline">
+                              {entry?.bookingCodes?.football || '-'}
+                            </button>
                           </div>
                         </div>
-                      </div>
+            </div>
                     </div>
-
-                    {/* Expandable Content */}
-                    {expandedCards.has(game.id) && (
-                      <div className="border-t border-gray-200 bg-gray-50">
-                        <div className="p-4">
-                          {/* Booking Codes Section */}
-                          <div className="mb-6">
-                            <h5 className="text-sm font-semibold text-gray-700 mb-3">Booking Codes</h5>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-white p-3 rounded-lg border">
-                                <div className="text-xs text-gray-500 mb-1">Sporty</div>
-                                <button 
-                                  onClick={() => navigator.clipboard.writeText(game.bookingCodes.sporty)}
-                                  className="text-sm font-mono text-blue-600 hover:text-blue-800 underline"
-                                >
-                                  {game.bookingCodes.sporty}
-                                </button>
-                              </div>
-                              <div className="bg-white p-3 rounded-lg border">
-                                <div className="text-xs text-gray-500 mb-1">MSport</div>
-                                <button 
-                                  onClick={() => navigator.clipboard.writeText(game.bookingCodes.msport)}
-                                  className="text-sm font-mono text-green-600 hover:text-green-800 underline"
-                                >
-                                  {game.bookingCodes.msport}
-                                </button>
-                              </div>
-                              <div className="bg-white p-3 rounded-lg border">
-                                <div className="text-xs text-gray-500 mb-1">Football</div>
-                                <button 
-                                  onClick={() => navigator.clipboard.writeText(game.bookingCodes.football)}
-                                  className="text-sm font-mono text-purple-600 hover:text-purple-800 underline"
-                                >
-                                  {game.bookingCodes.football}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Games Details */}
-                          <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-3">Games in this package</h5>
-                            {game.matches.length === 0 ? (
-                              <p className="text-gray-500 text-sm">No games available yet.</p>
-                            ) : (
-                              <div className="space-y-3">
-                                {game.matches.map((match: any, matchIndex: number) => (
-                                  <div key={matchIndex} className="bg-white rounded-lg p-4 border">
-                                    <div className="flex items-center justify-between mb-3">
-                                      <h6 className="font-semibold text-gray-800">
-                                        {match.homeTeam} vs {match.awayTeam}
-                                      </h6>
-                                      {match.result && (
-                                        <div className={`px-2 py-1 rounded text-xs font-semibold ${
-                                          match.result === 'win' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                        }`}>
-                                          {match.result === 'win' ? 'WON' : 'LOST'}
-                                        </div>
-                                      )}
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                      <div>
-                                        <span className="font-medium text-gray-600">Prediction:</span>
-                                        <span className="ml-2 text-gray-800">{match.prediction || match.option || 'N/A'}</span>
-                                      </div>
-                                      <div>
-                                        <span className="font-medium text-gray-600">Odds:</span>
-                                        <span className="ml-2 text-gray-800">{match.odds || 'N/A'}</span>
-                                      </div>
-                                    </div>
-
-                                    {game.isResultsUpdated && match.result && (
-                                      <div className="mt-3 pt-3 border-t border-gray-200">
-                                        {renderMatchResult(match)}
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
-          </div>
+                </div>
               </div>
             </div>
-
 
       {/* Footer */}
       <footer className="bg-[#191970] text-white py-8">

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () => void }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const { isLoggedIn, userData, isLoading, logout } = useAuth()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -32,6 +33,14 @@ export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () 
     }
   }, [])
 
+  // Check if user is admin from localStorage
+  useEffect(() => {
+    const adminStatus = localStorage.getItem('is_admin')
+    if (adminStatus == "1" || adminStatus === 'true') {
+      setIsAdmin(true)
+    }
+  }, [isLoggedIn])
+
   return (
     <nav className="bg-[#191970] border-b border-indigo-400 px-4 py-3 fixed top-0 left-0 right-0 z-50">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
@@ -54,6 +63,13 @@ export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () 
               <a href="/about" className="text-white hover:text-indigo-200 transition-colors">
                 About
               </a>
+              
+              {/* Admin Button - Only show if user is admin */}
+              {isLoggedIn && isAdmin && (
+                <a href="/admindashboard" className="text-white hover:text-indigo-200 transition-colors">
+                  Admin
+                </a>
+              )}
 
               <a href="/notifications" className="text-white hover:text-indigo-200 transition-colors relative">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,6 +113,16 @@ export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () 
                     >
                       Dashboard
                     </a>
+                    {/* Admin Link in Dropdown - Only show if user is admin */}
+                    {isAdmin && (
+                      <a
+                        href="/admindashboard"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        Admin Dashboard
+                      </a>
+                    )}
                     <a
                       href="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -143,6 +169,7 @@ export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () 
         <button
           className="md:hidden text-white"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -178,6 +205,17 @@ export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () 
               About
             </a>
 
+            {/* Admin Button - Only show if user is admin */}
+            {isLoggedIn && isAdmin && (
+              <a 
+                href="/admindashboard" 
+                className="block text-white hover:text-indigo-200 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Admin
+              </a>
+            )}
+
             <a 
               href="/notifications" 
               className="block text-white hover:text-indigo-200 transition-colors relative"
@@ -212,6 +250,16 @@ export default function Navbar({ onPredictionsClick }: { onPredictionsClick: () 
                   >
                     Dashboard
                   </a>
+                  {/* Admin Link in Mobile Menu - Only show if user is admin */}
+                  {isAdmin && (
+                    <a
+                      href="/admindashboard"
+                      className="block text-white hover:text-indigo-200 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Admin Dashboard
+                    </a>
+                  )}
                   <a
                     href="/settings"
                     className="block text-white hover:text-indigo-200 transition-colors"
