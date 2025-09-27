@@ -300,11 +300,7 @@ export default function VIP() {
     if (!isResultsUpdated) return null
 
   return (
-                      <div className="flex items-center justify-between">
-                        <div className="flex space-x-2">
-          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
-          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
-                        </div>
+                      <div className="flex items-center justify-end">
         <div className={`w-6 h-6 ${
           match.result === 'win'
             ? 'bg-green-500'
