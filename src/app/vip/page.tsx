@@ -305,15 +305,26 @@ export default function VIP() {
           <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
           <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
                         </div>
-        <div className={`w-6 h-6 ${match.result === 'win' ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <div className={`w-6 h-6 ${
+          match.result === 'win'
+            ? 'bg-green-500'
+            : match.result === 'pending'
+            ? 'bg-yellow-400'
+            : 'bg-red-500'
+        } rounded-full flex items-center justify-center`}>
+          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
             {match.result === 'win' ? (
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            ) : match.result === 'pending' ? (
+              <path fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-4.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM10 5.5c-1.518 0-2.5.928-2.5 2a.75.75 0 01-1.5 0c0-2.086 1.832-3.5 4-3.5 2.04 0 3.5 1.294 3.5 3 0 1.176-.722 2.012-1.523 2.715-.404.355-.727.64-.977.978-.25.338-.25.602-.25.807a.75.75 0 01-1.5 0c0-.475.113-.973.422-1.405.3-.418.712-.774 1.116-1.13.618-.543 1.212-1.058 1.212-1.965 0-.905-.814-1.5-1.5-1.5z"
+          clipRule="evenodd"
+              />
             ) : (
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             )}
-                          </svg>
-                        </div>
+          </svg>
+        </div>
                       </div>
     )
   }
