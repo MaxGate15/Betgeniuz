@@ -310,16 +310,8 @@ export default function AdminDashboard() {
     // Remove admin session tokens
     localStorage.removeItem('adminLoggedIn')
     
-    // If user is logged in as regular user with admin privileges, 
-    // redirect to regular dashboard instead of completely logging out
-    const isUserAdmin = localStorage.getItem('is_admin')
-    const isLoggedIn = localStorage.getItem('accessToken')
-    
-    if (isLoggedIn && (isUserAdmin === 'true' || isUserAdmin === '1')) {
-      router.push('/dashboard')
-    } else {
-      router.push('/')
-    }
+    // Always redirect to home page when admin logs out
+    router.push('/')
   }
 
   const markNotificationRead = async (id: number) => {

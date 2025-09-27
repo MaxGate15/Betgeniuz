@@ -352,18 +352,10 @@ export default function VIP() {
           <div className="space-y-2">
             {vipData.matches.map((match: any) => (
               <div key={match.id} className="text-left">
-                <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
-                {isResultsUpdated && (
-                  <div className="mt-2">
-                    <div className="text-xs text-gray-600 mb-1">
-                      <span className="font-medium">Prediction:</span> {match.prediction || match.option || 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      <span className="font-medium">Odds:</span> {match.odds || 'N/A'}
-                    </div>
-                    {renderMatchResult(match, vipType)}
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-800 font-bold">{match.homeTeam} vs {match.awayTeam}</div>
+                  {isResultsUpdated && renderMatchResult(match, vipType)}
+                </div>
               </div>
             ))}
           </div>
