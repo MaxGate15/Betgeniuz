@@ -209,10 +209,16 @@ export default function Home() {
                       id="date-picker"
                       type="date"
                       className="block w-64 px-4 py-3 text-lg rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-gray-100"
+                      value={selectedDate || ''}
                       onChange={(e) => {
                         if (e.target.value) {
-                          setActiveTab('custom');
                           setSelectedDate(e.target.value);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // On mobile, blur happens after date selection
+                        if (e.target.value) {
+                          setActiveTab('custom');
                           setShowDatePicker(false);
                         }
                       }}
