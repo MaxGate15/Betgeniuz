@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/useAuth'
 export default function Home() {
   const [activeTab, setActiveTab] = useState('today')
   const [showBookingPopup, setShowBookingPopup] = useState(false)
-  const [showDatePicker, setShowDatePicker] = useState(false)
   const { isLoggedIn } = useAuth()
 
   // Function to handle button clicks with auth check
@@ -189,11 +188,40 @@ export default function Home() {
                 Tomorrow
               </button>
             </div>
-            {/* Date Picker Icon - now triggers fullscreen popup */}
+            {/* Date Picker Icon - trigger native picker reliably */}
             <div className="relative">
+              <input
+                id="date-picker"
+                type="date"
+                className="sr-only"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setActiveTab('custom');
+                    setSelectedDate(e.target.value);
+                  }
+                }}
+                ref={(el) => {
+                  // attach to window for button handler below
+                  // @ts-ignore
+                  window.__datePickerEl = el;
+                }}
+              />
               <button
                 type="button"
-                onClick={() => setShowDatePicker(true)}
+                onClick={() => {
+                  // Prefer showPicker where supported
+                  const el = (window as any).__datePickerEl as HTMLInputElement | undefined;
+                  if (el) {
+                    // @ts-ignore
+                    if (typeof el.showPicker === 'function') {
+                      // @ts-ignore
+                      el.showPicker();
+                    } else {
+                      el.click();
+                      el.focus();
+                    }
+                  }
+                }}
                 className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
                 title="Pick a custom date"
               >
@@ -201,39 +229,6 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </button>
-              {showDatePicker && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-                  <div className="bg-white rounded-lg p-8 flex flex-col items-center shadow-2xl">
-                    <label htmlFor="date-picker" className="mb-4 text-lg font-semibold text-gray-800">Pick a custom date</label>
-                    <input
-                      id="date-picker"
-                      type="date"
-                      className="block w-64 px-4 py-3 text-lg rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-gray-100"
-                      value={selectedDate || ''}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          setSelectedDate(e.target.value);
-                        }
-                      }}
-                      onBlur={(e) => {
-                        // On mobile, blur happens after date selection
-                        if (e.target.value) {
-                          setActiveTab('custom');
-                          setShowDatePicker(false);
-                        }
-                      }}
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowDatePicker(false)}
-                      className="mt-6 px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
           
