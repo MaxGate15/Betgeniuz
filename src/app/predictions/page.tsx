@@ -386,11 +386,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
     if (!vipResultsUpdated[vipType as keyof typeof vipResultsUpdated]) return null
 
     return (
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-2">
-          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
-          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
-        </div>
+      <div className="flex items-center justify-end">
         <div className={`w-6 h-6 ${match.result === 'win' ? 'bg-green-500' : 'bg-red-500'} rounded-full flex items-center justify-center`}>
           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
             {match.result === 'win' ? (
@@ -412,11 +408,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
     if (!isResultsUpdated) return null
 
     return (
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-2">
-          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Option: {match.option}</div>
-          <div className="bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs">Odds: {match.odds}</div>
-        </div>
+      <div className="flex items-center justify-end">
         <div className={`w-6 h-6 ${
           match.result === 'win'
             ? 'bg-green-500'
@@ -462,12 +454,6 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
                 <div className="text-sm text-gray-800 font-bold mb-1">{match.homeTeam} vs {match.awayTeam}</div>
                 {isResultsUpdated && (
                   <div className="mt-2">
-                    <div className="text-xs text-gray-600 mb-1">
-                      <span className="font-medium">Prediction:</span> {match.prediction || match.option || 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      <span className="font-medium">Odds:</span> {match.odds || 'N/A'}
-                    </div>
                     {renderMatchResult(match, vipType)}
                   </div>
                 )}
