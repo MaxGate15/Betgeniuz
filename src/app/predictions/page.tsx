@@ -667,7 +667,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
               <input
                 id="date-picker"
                 type="date"
-                className="sr-only"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 onChange={(e) => {
                   if (e.target.value) {
                     setActiveTab('custom');
@@ -679,13 +679,15 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
                   // @ts-ignore
                   window.__datePickerEl = el;
                 }}
+                // Make sure input is always clickable
+                tabIndex={0}
               />
               <button
                 type="button"
                 onClick={() => {
-                  // Prefer showPicker where supported
                   const el = (window as any).__datePickerEl as HTMLInputElement | undefined;
                   if (el) {
+                    // Prefer showPicker where supported
                     // @ts-ignore
                     if (typeof el.showPicker === 'function') {
                       // @ts-ignore
@@ -696,8 +698,10 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
                     }
                   }
                 }}
-                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
+                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200 pointer-events-none"
                 title="Pick a custom date"
+                tabIndex={-1}
+                aria-label="Pick a custom date"
               >
                 <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
