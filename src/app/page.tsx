@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 export default function Home() {
   const [activeTab, setActiveTab] = useState('today')
   const [showBookingPopup, setShowBookingPopup] = useState(false)
+  const [showDateModal, setShowDateModal] = useState(false);
   const { isLoggedIn } = useAuth()
 
   // Function to handle button clicks with auth check
@@ -190,38 +191,9 @@ export default function Home() {
             </div>
             {/* Date Picker Icon - trigger native picker reliably */}
             <div className="relative">
-              <input
-                id="date-picker"
-                type="date"
-                className="sr-only"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setActiveTab('custom');
-                    setSelectedDate(e.target.value);
-                  }
-                }}
-                ref={(el) => {
-                  // attach to window for button handler below
-                  // @ts-ignore
-                  window.__datePickerEl = el;
-                }}
-              />
               <button
                 type="button"
-                onClick={() => {
-                  // Prefer showPicker where supported
-                  const el = (window as any).__datePickerEl as HTMLInputElement | undefined;
-                  if (el) {
-                    // @ts-ignore
-                    if (typeof el.showPicker === 'function') {
-                      // @ts-ignore
-                      el.showPicker();
-                    } else {
-                      el.click();
-                      el.focus();
-                    }
-                  }
-                }}
+                onClick={() => setShowDateModal(true)}
                 className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
                 title="Pick a custom date"
               >
@@ -229,6 +201,32 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </button>
+
+              {showDateModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-8 max-w-xs w-full text-center">
+                    <h3 className="text-lg font-bold mb-4 text-gray-800">Pick a Date</h3>
+                    <input
+                      id="date-picker-modal"
+                      type="date"
+                      className="w-full px-4 py-2 border rounded mb-6"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setActiveTab('custom');
+                          setSelectedDate(e.target.value);
+                          setShowDateModal(false);
+                        }
+                      }}
+                    />
+                    <button
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded"
+                      onClick={() => setShowDateModal(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
