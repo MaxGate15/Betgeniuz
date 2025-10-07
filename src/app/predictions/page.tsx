@@ -23,8 +23,8 @@ export default function Predictions() {
   // Fix type error by updating the type of vipResultsUpdated and vipSoldOut to Record<string, boolean>
 const [vipResultsUpdated, setVipResultsUpdated] = useState<Record<string, boolean>>({
   vip1: false,
-  vip2: true,
-  vip3: true
+  vip2: false,
+  vip3: false
 })
 const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
   vip1: false,
@@ -160,7 +160,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
         // Check if we have any VIP data
         if (Object.keys(matches).length > 0) {
           setVIPMatchesData(matches)
-          setVipResultsUpdated(resultsUpdated)
+          // setVipResultsUpdated(resultsUpdated)
           setVipSoldOut(soldOut)
         } else {
           // No VIP packages available from admin
@@ -520,7 +520,7 @@ const [vipSoldOut, setVipSoldOut] = useState<Record<string, boolean>>({
                 onClick={() => handleBuyNowInline(vipType, cardIndex)}
                 className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white py-3 px-6 rounded-lg font-semibold transition-colors mb-2"
               >
-                Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+                Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price} Odds:{(adminVipPackages[vipType] as any)?.odds || vipData.odds}
               </button>
               {/* Quick inline Paystack option */}
               

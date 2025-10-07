@@ -411,7 +411,7 @@ export default function VIP() {
               data-price={vipData.price}
               data-booking_id={vipType}
             >
-              Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price}
+              Buy Now {(adminVipPackages[vipType] as any)?.price || vipData.price} Odds:{(adminVipPackages[vipType] as any)?.odds || vipData.odds}
             </button>
           ))}
         </div>

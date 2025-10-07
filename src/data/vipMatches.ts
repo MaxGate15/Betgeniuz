@@ -15,6 +15,7 @@ export interface VIPPackage {
   category: string
   isResultsUpdated: boolean
   isSoldOut: boolean
+  odds: string
   bookingCodes: {
     sporty: string
     msport: string
@@ -35,26 +36,38 @@ const fetchVIPMatches = async (): Promise<Record<string, VIPPackage>> => {
       return
     }
     const cat = item.booking.category
-    result[cat] = {
-      id: cat,
-      name: cat.toUpperCase(),
-      category: cat,
-      price: `GHS ${item.booking.price}`,
-      isResultsUpdated: !!item.booking.updated,
-      isSoldOut: !!item.booking.sold_out,
-      matches: Array.isArray(item.games) ? item.games.map((g: any) => ({
+    // Compute total odds while building matches
+    let totalOdds = 1
+    const matches: MatchResult[] = Array.isArray(item.games) ? item.games.map((g: any) => {
+      const oddsStr = g.odds?.toString() ?? ''
+      const oddsNum = parseFloat(oddsStr)
+      if (!isNaN(oddsNum) && isFinite(oddsNum)) {
+        totalOdds *= oddsNum
+      }
+      return {
         id: `${cat}-match${g.id}`,
         homeTeam: g.home_team,
         awayTeam: g.away_team,
         option: g.prediction,
-        odds: g.odds?.toString() || '',
+        odds: oddsStr,
         result:
           g.match_status === 'won'
             ? 'win'
             : g.match_status === 'lost'
             ? 'loss'
             : 'pending'
-      })) : [],
+      }
+    }) : []
+    result[cat] = {
+      id: cat,
+      name: cat.toUpperCase(),
+      category: cat,
+      price: `GHS ${item.booking.price}`,
+      isResultsUpdated: !!item.booking.updated,
+      
+      isSoldOut: !!item.booking.sold_out,
+      matches,
+      odds: matches.length > 0 ? totalOdds.toFixed(2) : '0',
       bookingCodes: {
         sporty: item.booking.share_code || '',
         msport: item.booking.share_code || '',
