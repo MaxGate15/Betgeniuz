@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/hooks/useAuth'
-import { useMediaQuery } from 'react-responsive';
 
 function DatePickerModal({
   open,
