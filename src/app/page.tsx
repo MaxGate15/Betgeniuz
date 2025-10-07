@@ -5,50 +5,11 @@ import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/hooks/useAuth'
 
-function DatePickerModal({
-  open,
-  onClose,
-  onSelect,
-  initialDate,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSelect: (date: string) => void;
-  initialDate?: string | null;
-}) {
-  return open ? (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div
-        className="
-          bg-white rounded-lg p-6 shadow-lg
-          w-[90vw] max-w-xs
-          relative
-          left-[-10vw]   // <-- This shifts the modal 10vw to the left
-        "
-      >
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">Pick a date</h3>
-        <input
-          type="date"
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4 text-gray-800"
-          defaultValue={initialDate || ''}
-          onChange={e => onSelect(e.target.value)}
-        />
-        <button
-          className="w-full bg-[#191970] text-white py-2 rounded font-semibold"
-          onClick={onClose}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  ) : null;
-}
-
 export default function Home() {
   const [activeTab, setActiveTab] = useState('today')
   const [showBookingPopup, setShowBookingPopup] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const { isLoggedIn } = useAuth()
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   // Function to handle button clicks with auth check
   const handleButtonClick = (href: string) => {
@@ -65,7 +26,6 @@ export default function Home() {
   const [predictionsLoading, setPredictionsLoading] = useState(false);
   const [predictionsError, setPredictionsError] = useState('');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showDateModal, setShowDateModal] = useState(false);
 
   // Helper to get YYYY-MM-DD for today/yesterday/tomorrow
   const getDateString = (tab: string): string => {
@@ -229,76 +189,44 @@ export default function Home() {
                 Tomorrow
               </button>
             </div>
-            {/* Date Picker Icon - trigger native picker reliably */}
+            {/* Date Picker Icon - now triggers fullscreen popup */}
             <div className="relative">
-              {/* Show modal on mobile, native picker on desktop */}
-              {isMobile ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setShowDateModal(true)}
-                    className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
-                    title="Pick a custom date"
-                  >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <DatePickerModal
-                    open={showDateModal}
-                    onClose={() => setShowDateModal(false)}
-                    onSelect={date => {
-                      if (date) {
-                        setActiveTab('custom');
-                        setSelectedDate(date);
-                        setShowDateModal(false);
-                      }
-                    }}
-                    initialDate={selectedDate}
-                  />
-                </>
-              ) : (
-                <>
-                  <input
-                    id="date-picker"
-                    type="date"
-                    className="sr-only"
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        setActiveTab('custom');
-                        setSelectedDate(e.target.value);
-                      }
-                    }}
-                    ref={(el) => {
-                      // attach to window for button handler below
-                      // @ts-ignore
-                      window.__datePickerEl = el;
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Prefer showPicker where supported
-                      const el = (window as any).__datePickerEl as HTMLInputElement | undefined;
-                      if (el) {
-                        // @ts-ignore
-                        if (typeof el.showPicker === 'function') {
-                          // @ts-ignore
-                          el.showPicker();
-                        } else {
-                          el.click();
-                          el.focus();
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(true)}
+                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
+                title="Pick a custom date"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
+              {showDatePicker && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+                  <div className="bg-white rounded-lg p-8 flex flex-col items-center shadow-2xl">
+                    <label htmlFor="date-picker" className="mb-4 text-lg font-semibold text-gray-800">Pick a custom date</label>
+                    <input
+                      id="date-picker"
+                      type="date"
+                      className="block w-64 px-4 py-3 text-lg rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-gray-100"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setActiveTab('custom');
+                          setSelectedDate(e.target.value);
+                          setShowDatePicker(false);
                         }
-                      }
-                    }}
-                    className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors border border-gray-200"
-                    title="Pick a custom date"
-                  >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                </>
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker(false)}
+                      className="mt-6 px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
